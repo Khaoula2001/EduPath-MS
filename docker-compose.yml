@@ -1,0 +1,157 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # 1. Base de données PostgreSQL
+  postgres:
+    image: postgres:15
+    container_name: edupath-postgres
+    environment:
+      POSTGRES_DB: edupath
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./databases/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - edupath-network
+
+  # 2. Stockage MinIO
+  minio:
+    image: minio/minio
+    container_name: edupath-minio
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - edupath-network
+
+  # 3. LMS Connector (Node.js)
+  lms-connector:
+    build: ./microservices/lms-connector
+    container_name: lms-connector
+    environment:
+      - DATABASE_URL=postgresql://admin:admin123@postgres:5432/edupath
+      - MOODLE_API_URL=${MOODLE_API_URL}
+      - MOODLE_TOKEN=${MOODLE_TOKEN}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    networks:
+      - edupath-network
+
+  # 4. PrepaData (Python + Airflow)
+  prepadata:
+    build: ./microservices/prepadata
+    container_name: prepadata
+    environment:
+      - DATABASE_URL=postgresql://admin:admin123@postgres:5432/edupath
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - edupath-network
+
+  # 5. StudentProfiler (Python + ML)
+  student-profiler:
+    build: ./microservices/student-profiler
+    container_name: student-profiler
+    environment:
+      - DATABASE_URL=postgresql://admin:admin123@postgres:5432/edupath
+    ports:
+      - "5001:5000"
+    depends_on:
+      - postgres
+    networks:
+      - edupath-network
+
+  # 6. PathPredictor (Python + XGBoost)
+  path-predictor:
+    build: ./microservices/path-predictor
+    container_name: path-predictor
+    environment:
+      - DATABASE_URL=postgresql://admin:admin123@postgres:5432/edupath
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    ports:
+      - "5002:5000"
+    depends_on:
+      - postgres
+      - mlflow
+    networks:
+      - edupath-network
+
+  # 7. RecoBuilder (Python + BERT + Faiss)
+  recobuilder:
+    build: ./microservices/recobuilder
+    container_name: recobuilder
+    environment:
+      - DATABASE_URL=postgresql://admin:admin123@postgres:5432/edupath
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=admin123
+    ports:
+      - "5003:5000"
+    depends_on:
+      - postgres
+      - minio
+    networks:
+      - edupath-network
+
+  # 8. TeacherConsole (React)
+  teacher-console:
+    build: ./microservices/teacher-console
+    container_name: teacher-console
+    ports:
+      - "3001:3000"
+    depends_on:
+      - lms-connector
+      - student-profiler
+      - path-predictor
+    networks:
+      - edupath-network
+
+  # 9. StudentCoach (Flutter - API seulement)
+  student-coach:
+    build: ./microservices/student-coach
+    container_name: student-coach
+    environment:
+      - DATABASE_URL=postgresql://admin:admin123@postgres:5432/edupath
+    ports:
+      - "5004:5000"
+    depends_on:
+      - postgres
+      - recobuilder
+    networks:
+      - edupath-network
+
+  # 10. MLflow (Tracking des modeles)
+  mlflow:
+    image: mlflow/mlflow
+    container_name: mlflow-tracking
+    command: mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root /mlartifacts --host 0.0.0.0 --port 5000
+    ports:
+      - "5005:5000"
+    volumes:
+      - mlflow_data:/mlartifacts
+    networks:
+      - edupath-network
+
+volumes:
+  postgres_data:
+  minio_data:
+  mlflow_data:
+
+networks:
+  edupath-network:
+    driver: bridge

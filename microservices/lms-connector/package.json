@@ -1,0 +1,34 @@
+{
+  "name": "lms-connector",
+  "version": "1.0.0",
+  "description": "Microservice for LMS data synchronization",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "axios": "^1.13.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "node-cron": "^4.2.1",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NisrineLachguer/EduPath-MS.git"
+  },
+  "private": true,
+  "bugs": {
+    "url": "https://github.com/NisrineLachguer/EduPath-MS/issues"
+  },
+  "homepage": "https://github.com/NisrineLachguer/EduPath-MS#readme",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
