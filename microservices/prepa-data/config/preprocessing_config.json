@@ -1,0 +1,167 @@
+{
+  "preprocessing_config": {
+    "version": "1.0",
+    "description": "Configuration for OULAD data preprocessing pipeline",
+
+    "data_types": {
+      "student_info": {
+        "id_student": "int64",
+        "code_module": "object",
+        "code_presentation": "object",
+        "gender": "object",
+        "region": "object",
+        "highest_education": "object",
+        "imd_band": "object",
+        "age_band": "object",
+        "num_of_prev_attempts": "int64",
+        "studied_credits": "int64",
+        "disability": "object",
+        "final_result": "object"
+      },
+      "student_vle": {
+        "id_student": "int64",
+        "id_site": "int64",
+        "code_module": "object",
+        "code_presentation": "object",
+        "date": "int64",
+        "sum_click": "int64"
+      },
+      "student_assessment": {
+        "id_assessment": "int64",
+        "id_student": "int64",
+        "date_submitted": "int64",
+        "is_banked": "int64",
+        "score": "float64"
+      }
+    },
+
+    "cleaning": {
+      "remove_duplicates": true,
+      "duplicate_subset": {
+        "student_info": ["id_student", "code_module", "code_presentation"],
+        "student_vle": ["id_student", "id_site", "date"],
+        "student_assessment": ["id_assessment", "id_student"]
+      },
+
+      "missing_values_strategy": {
+        "categorical": "fill_unknown",
+        "numeric": "fill_zero",
+        "critical_cols": ["id_student", "code_module", "code_presentation"]
+      },
+
+      "outlier_detection": {
+        "method": "iqr",
+        "threshold": 1.5,
+        "columns": ["sum_click", "score", "studied_credits"]
+      },
+
+      "score_validation": {
+        "min": 0,
+        "max": 100
+      }
+    },
+
+    "encoding": {
+      "target_variable": "final_result",
+      "target_mapping": {
+        "Pass": 0,
+        "Fail": 1,
+        "Withdrawn": 2,
+        "Distinction": 3
+      },
+
+      "categorical_features": [
+        "gender",
+        "region",
+        "highest_education",
+        "imd_band",
+        "age_band",
+        "disability"
+      ],
+
+      "encoding_method": "label",
+
+      "fill_unknown": true
+    },
+
+    "feature_engineering": {
+      "engagement_features": [
+        "total_clicks",
+        "avg_clicks_per_activity",
+        "activity_count",
+        "engagement_intensity",
+        "active_days",
+        "regularity_index",
+        "first_activity_day",
+        "last_activity_day",
+        "days_without_activity",
+        "late_start_days"
+      ],
+
+      "performance_features": [
+        "mean_score",
+        "score_std",
+        "assessment_submissions_count",
+        "latest_assessment_score"
+      ],
+
+      "progression_features": [
+        "study_duration",
+        "progress_rate",
+        "unregistered",
+        "dropout_risk_signal"
+      ],
+
+      "demographics": [
+        "gender_encoded",
+        "region_encoded",
+        "highest_education_encoded",
+        "imd_band_encoded",
+        "age_band_encoded",
+        "disability_encoded",
+        "num_of_prev_attempts",
+        "studied_credits"
+      ]
+    },
+
+    "normalization": {
+      "method": "minmax",
+      "feature_range": [0, 1],
+
+      "numeric_features_to_normalize": [
+        "total_clicks",
+        "avg_clicks_per_activity",
+        "activity_count",
+        "engagement_intensity",
+        "mean_score",
+        "score_std",
+        "assessment_submissions_count",
+        "study_duration",
+        "progress_rate",
+        "num_of_prev_attempts",
+        "studied_credits"
+      ],
+
+      "skip_normalization": [
+        "id_student",
+        "code_module",
+        "code_presentation",
+        "final_result_encoded"
+      ]
+    },
+
+    "feature_selection": {
+      "variance_threshold": 0.01,
+      "correlation_threshold": 0.95,
+      "remove_low_variance": true,
+      "remove_highly_correlated": true
+    },
+
+    "data_quality": {
+      "min_rows_per_table": 100,
+      "max_missing_rate": 0.30,
+      "max_duplicate_rate": 0.05,
+      "log_quality_checks": true
+    }
+  }
+}

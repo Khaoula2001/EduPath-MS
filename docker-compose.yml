@@ -1,157 +1,140 @@
-# docker-compose.yml
 version: '3.8'
 
 services:
-  # 1. Base de données PostgreSQL
+  # ==========================================
+  # PostgreSQL Database - ULTRA LÉGER
+  # ==========================================
   postgres:
-    image: postgres:15
-    container_name: edupath-postgres
+    image: postgres:15-alpine
+    container_name: prepadata_postgres
     environment:
-      POSTGRES_DB: edupath
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin123
+      POSTGRES_USER: prepadata
+      POSTGRES_PASSWORD: prepadata_pwd
+      POSTGRES_DB: analytics
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d:ro
     ports:
       - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./databases/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - edupath-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prepadata -d analytics"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  # 2. Stockage MinIO
-  minio:
-    image: minio/minio
-    container_name: edupath-minio
-    environment:
-      MINIO_ROOT_USER: admin
-      MINIO_ROOT_PASSWORD: admin123
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    command: server /data --console-address ":9001"
-    volumes:
-      - minio_data:/data
-    networks:
-      - edupath-network
-
-  # 3. LMS Connector (Node.js)
-  lms-connector:
-    build: ./microservices/lms-connector
-    container_name: lms-connector
-    environment:
-      - DATABASE_URL=postgresql://admin:admin123@postgres:5432/edupath
-      - MOODLE_API_URL=${MOODLE_API_URL}
-      - MOODLE_TOKEN=${MOODLE_TOKEN}
-    ports:
-      - "3000:3000"
+  # ==========================================
+  # Apache Airflow - VERSION OFFICIELLE
+  # ==========================================
+  airflow-init:
+    image: apache/airflow:2.7.3  # Version plus récente avec Python 3.8+
+    container_name: airflow_init
     depends_on:
       - postgres
-    networks:
-      - edupath-network
-
-  # 4. PrepaData (Python + Airflow)
-  prepadata:
-    build: ./microservices/prepadata
-    container_name: prepadata
     environment:
-      - DATABASE_URL=postgresql://admin:admin123@postgres:5432/edupath
-      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/analytics
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__CORE__FERNET_KEY: "81HqDtbqAywKSOumSha3BhWNOdQ26slT6K0YaZeZyPs="
+    volumes:
+      - ./microservices/prepa-data/dags:/opt/airflow/dags
+      - ./microservices/prepa-data/src:/opt/prepadata/src
+      - ./microservices/prepa-data/data:/opt/prepadata/data
+      - ./microservices/prepa-data/config:/opt/prepadata/config
+    command: >
+      bash -c "
+      echo '=== ATTENTE POSTGRESQL ===' &&
+      until PGPASSWORD=prepadata_pwd psql -h postgres -U prepadata -d analytics -c 'SELECT 1' >/dev/null 2>&1; do
+        echo 'En attente de PostgreSQL...';
+        sleep 2;
+      done &&
+      echo '=== INITIALISATION DB ===' &&
+      airflow db init &&
+      echo '=== UPGRADE DB ===' &&
+      airflow db upgrade &&
+      echo '=== CREATION UTILISATEUR ===' &&
+      airflow users create \
+        --username admin \
+        --password admin \
+        --firstname Admin \
+        --lastname User \
+        --role Admin \
+        --email admin@example.com || echo 'Utilisateur existe déjà'
+      "
+
+  airflow-webserver:
+    image: apache/airflow:2.7.3  # Version plus récente avec Python 3.8+
+    container_name: prepadata_airflow_webserver
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - airflow-init
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/analytics
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__CORE__FERNET_KEY: "81HqDtbqAywKSOumSha3BhWNOdQ26slT6K0YaZeZyPs="
+      AIRFLOW__WEBSERVER__SECRET_KEY: "46e8d8c7a3f2b1d9e5c4a6f8b2d7e9c1a3f5b8d2e7c9a4f6b1d8e3c7a9f2b5d4"
+      AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: "True"
+    volumes:
+      - ./microservices/prepa-data/dags:/opt/airflow/dags
+      - ./microservices/prepa-data/src:/opt/prepadata/src
+      - ./microservices/prepa-data/data:/opt/prepadata/data
+      - ./microservices/prepa-data/config:/opt/prepadata/config
     ports:
       - "8080:8080"
-    depends_on:
-      - postgres
-    networks:
-      - edupath-network
+    command: >
+      bash -c "
+      echo '=== INSTALL DEPENDENCIES ===' &&
+      pip install --no-cache-dir scikit-learn==1.3.0 pandas numpy && 
+      sleep 5 &&
+      echo '=== DEMARRAGE WEBSERVER ===' &&
+      airflow webserver --port 8080
+      "
 
-  # 5. StudentProfiler (Python + ML)
-  student-profiler:
-    build: ./microservices/student-profiler
-    container_name: student-profiler
+  airflow-scheduler:
+    image: apache/airflow:2.7.3  # Version plus récente avec Python 3.8+
+    container_name: prepadata_airflow_scheduler
+    restart: unless-stopped
+    depends_on:
+      - airflow-webserver
     environment:
-      - DATABASE_URL=postgresql://admin:admin123@postgres:5432/edupath
-    ports:
-      - "5001:5000"
-    depends_on:
-      - postgres
-    networks:
-      - edupath-network
-
-  # 6. PathPredictor (Python + XGBoost)
-  path-predictor:
-    build: ./microservices/path-predictor
-    container_name: path-predictor
-    environment:
-      - DATABASE_URL=postgresql://admin:admin123@postgres:5432/edupath
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
-    ports:
-      - "5002:5000"
-    depends_on:
-      - postgres
-      - mlflow
-    networks:
-      - edupath-network
-
-  # 7. RecoBuilder (Python + BERT + Faiss)
-  recobuilder:
-    build: ./microservices/recobuilder
-    container_name: recobuilder
-    environment:
-      - DATABASE_URL=postgresql://admin:admin123@postgres:5432/edupath
-      - MINIO_ENDPOINT=minio:9000
-      - MINIO_ACCESS_KEY=admin
-      - MINIO_SECRET_KEY=admin123
-    ports:
-      - "5003:5000"
-    depends_on:
-      - postgres
-      - minio
-    networks:
-      - edupath-network
-
-  # 8. TeacherConsole (React)
-  teacher-console:
-    build: ./microservices/teacher-console
-    container_name: teacher-console
-    ports:
-      - "3001:3000"
-    depends_on:
-      - lms-connector
-      - student-profiler
-      - path-predictor
-    networks:
-      - edupath-network
-
-  # 9. StudentCoach (Flutter - API seulement)
-  student-coach:
-    build: ./microservices/student-coach
-    container_name: student-coach
-    environment:
-      - DATABASE_URL=postgresql://admin:admin123@postgres:5432/edupath
-    ports:
-      - "5004:5000"
-    depends_on:
-      - postgres
-      - recobuilder
-    networks:
-      - edupath-network
-
-  # 10. MLflow (Tracking des modeles)
-  mlflow:
-    image: mlflow/mlflow
-    container_name: mlflow-tracking
-    command: mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root /mlartifacts --host 0.0.0.0 --port 5000
-    ports:
-      - "5005:5000"
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/analytics
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__CORE__FERNET_KEY: "81HqDtbqAywKSOumSha3BhWNOdQ26slT6K0YaZeZyPs="
+      AIRFLOW__WEBSERVER__SECRET_KEY: "46e8d8c7a3f2b1d9e5c4a6f8b2d7e9c1a3f5b8d2e7c9a4f6b1d8e3c7a9f2b5d4"
     volumes:
-      - mlflow_data:/mlartifacts
-    networks:
-      - edupath-network
+      - ./microservices/prepa-data/dags:/opt/airflow/dags
+      - ./microservices/prepa-data/src:/opt/prepadata/src
+      - ./microservices/prepa-data/data:/opt/prepadata/data
+      - ./microservices/prepa-data/config:/opt/prepadata/config
+    command: >
+      bash -c "
+      echo '=== INSTALL DEPENDENCIES ===' &&
+      pip install --no-cache-dir scikit-learn==1.3.0 pandas numpy && 
+      sleep 10 &&
+      echo '=== DEMARRAGE SCHEDULER ===' &&
+      airflow scheduler
+      "
 
-volumes:
-  postgres_data:
-  minio_data:
-  mlflow_data:
-
-networks:
-  edupath-network:
-    driver: bridge
+  prepadata:
+    image: python:3.10-slim
+    container_name: prepadata_service
+    depends_on:
+      - postgres
+    environment:
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DB: analytics
+      PG_USER: prepadata
+      PG_PASSWORD: prepadata_pwd
+    volumes:
+      - ./microservices/prepa-data/src:/opt/prepadata/src
+      - ./microservices/prepa-data/data:/opt/prepadata/data
+      - ./microservices/prepa-data/config:/opt/prepadata/config
+      - ./microservices/prepa-data/requirements.txt:/opt/prepadata/requirements.txt
+    command: >
+      bash -c "
+      pip install --no-cache-dir pandas numpy scikit-learn sqlalchemy psycopg2-binary &&
+      echo 'PrepData Microservice ready!' &&
+      tail -f /dev/null
+      "
