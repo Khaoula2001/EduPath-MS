@@ -1,0 +1,6 @@
+artifacts/
+.venv/
+__pycache__/
+*.pyc
+.test_db_
+

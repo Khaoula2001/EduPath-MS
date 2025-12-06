@@ -138,3 +138,37 @@ services:
       echo 'PrepData Microservice ready!' &&
       tail -f /dev/null
       "
+
+  student-profiler:
+    build:
+      context: ./microservices/student-profiler
+      dockerfile: Dockerfile
+    container_name: student_profiler_service
+    depends_on:
+      - postgres
+    environment:
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DB: analytics
+      PG_USER: prepadata
+      PG_PASSWORD: prepadata_pwd
+    volumes:
+      - ./microservices/student-profiler:/app
+    ports:
+      - "8000:8000"
+
+  rabbitmq:
+    image: rabbitmq:3.11-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"  # Port for AMQP (messaging)
+      - "15672:15672" # Port for web management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: edupath
+      RABBITMQ_DEFAULT_PASS: edupath
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
