@@ -1,0 +1,81 @@
+version: "3.9"
+
+services:
+  moodleapp:
+    build:
+      context: .
+    image: moodleapp:1.0
+    container_name: moodleapp
+    ports:
+      - "80:80"
+    volumes:
+      - moodledata:/var/www/moodledata
+    depends_on:
+      - moodledb
+
+  moodledb:
+    image: mysql:8.4.5
+    container_name: clouddb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - clouddbdata:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: clouddb
+      PMA_PORT: 3306
+      PMA_USER: ${MYSQL_USER}
+      PMA_PASSWORD: ${MYSQL_PASSWORD}
+    depends_on:
+      - moodledb
+
+
+  # LMSConnector (NOUVEAU)
+ 
+  lmsconnector:
+    build: ./LMSConnector
+    container_name: lmsconnector
+    ports:
+      - "3000:3000"
+    environment:
+      MOODLE_API_URL: http://moodleapp/webservice/rest/server.php
+      MOODLE_TOKEN: xxxxxxxxxxxxxxxxx
+      DB_HOST: lmsdb
+      DB_NAME: lmsconnector
+      DB_USER: lms
+      DB_PASSWORD: lmspass
+    depends_on:
+      - moodleapp
+      - lmsdb
+
+  
+  # Base PostgreSQL LMSConnector
+ 
+  lmsdb:
+    image: postgres:15
+    container_name: lmsdb
+    restart: always
+    environment:
+      POSTGRES_DB: lmsconnector
+      POSTGRES_USER: lms
+      POSTGRES_PASSWORD: lmspass
+    volumes:
+      - lmsdbdata:/var/lib/postgresql/data
+      - ./LMSConnector/sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5433:5432"
+
+volumes:
+  clouddbdata:
+  moodledata:
+  lmsdbdata:
