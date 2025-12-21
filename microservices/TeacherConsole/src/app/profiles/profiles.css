@@ -1,0 +1,339 @@
+.profiles-page {
+    padding: 24px 32px;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.page-header {
+    margin-bottom: 32px;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 4px 0;
+}
+
+.page-subtitle {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0;
+}
+
+/* Common Card Style */
+.card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Upper Charts Section */
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.chart-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 24px;
+}
+
+/* Pie Chart Layout */
+.pie-chart-wrapper {
+    position: relative;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pie-label {
+    position: absolute;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.label-assidu {
+    top: 15%;
+    right: 20%;
+    color: #10b981;
+}
+
+.label-moyen {
+    bottom: 25%;
+    left: 10%;
+    color: #f59e0b;
+}
+
+.label-procrast {
+    bottom: 15%;
+    right: 15%;
+    color: #ef4444;
+}
+
+.label-irreg {
+    top: 50%;
+    right: 5%;
+    color: #8b5cf6;
+}
+
+
+/* Bar Chart Layout */
+.bar-chart-wrapper {
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+}
+
+.bar-legend {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+.legend-item {
+    font-size: 12px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+/* Square dots for metrics */
+
+
+/* Profiles Grid */
+.profiles-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.profile-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 4px;
+}
+
+.profile-desc {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.4;
+    max-width: 80%;
+}
+
+.profile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.icon-green {
+    background: #10b981;
+}
+
+.icon-blue {
+    background: #3b82f6;
+}
+
+.icon-red {
+    background: #ef4444;
+}
+
+.icon-purple {
+    background: #8b5cf6;
+}
+
+.profile-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px dashed #e2e8f0;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 4px;
+}
+
+.stat-val {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.students-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.student-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.student-initials {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.student-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.s-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #334155;
+}
+
+.s-score {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.more-students {
+    font-size: 12px;
+    color: #94a3b8;
+    text-align: center;
+    margin-top: 12px;
+}
+
+
+/* Characteristics Section */
+.characteristics-section {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 24px;
+}
+
+.char-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+}
+
+.char-card {
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    /* Default fallback */
+}
+
+.char-card.green {
+    background: #f0fdf4;
+    border-color: #dcfce7;
+}
+
+.char-card.blue {
+    background: #eff6ff;
+    border-color: #dbeafe;
+}
+
+.char-card.red {
+    background: #fef2f2;
+    border-color: #fee2e2;
+}
+
+.char-card.purple {
+    background: #faf5ff;
+    border-color: #f3e8ff;
+}
+
+.char-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 12px;
+}
+
+.char-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.char-list li {
+    font-size: 12px;
+    color: #475569;
+    margin-bottom: 8px;
+    padding-left: 12px;
+    position: relative;
+}
+
+.char-list li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    font-weight: bold;
+}
+
+.char-card.green li::before {
+    color: #16a34a;
+}
+
+.char-card.blue li::before {
+    color: #2563eb;
+}
+
+.char-card.red li::before {
+    color: #dc2626;
+}
+
+.char-card.purple li::before {
+    color: #9333ea;
+}

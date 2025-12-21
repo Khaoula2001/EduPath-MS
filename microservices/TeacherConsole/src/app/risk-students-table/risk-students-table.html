@@ -1,0 +1,139 @@
+<div class="risk-table-container">
+  <div class="table-header">
+    <h3 class="table-title">Étudiants à Risque ({{ totalStudents }})</h3>
+
+    <div class="table-controls">
+      <!-- Recherche -->
+      <div class="search-box">
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Rechercher un étudiant..."
+          (input)="searchTerm = $event.target.value" class="search-input">
+      </div>
+
+      <!-- Filtres -->
+      <div class="filters">
+        <select [(ngModel)]="currentFilter" (change)="applyFilter(currentFilter)" class="filter-select">
+          <option *ngFor="let filter of riskLevelFilters" [value]="filter.value">
+            {{ filter.label }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <button (click)="exportData()" class="btn-export">
+          📥 Exporter CSV
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau -->
+  <div class="table-responsive">
+    <table class="risk-table">
+      <thead>
+        <tr>
+          <th (click)="sortBy('name')" class="sortable">
+            Nom
+            <span *ngIf="currentSort === 'name'">
+              {{ sortDirection === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th (click)="sortBy('riskScore')" class="sortable">
+            Score de risque
+            <span *ngIf="currentSort === 'riskScore'">
+              {{ sortDirection === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th>Niveau de risque</th>
+          <th (click)="sortBy('performance')" class="sortable">
+            Performance
+            <span *ngIf="currentSort === 'performance'">
+              {{ sortDirection === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th (click)="sortBy('lastActivity')" class="sortable">
+            Dernière activité
+            <span *ngIf="currentSort === 'lastActivity'">
+              {{ sortDirection === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let student of filteredStudents" [class.expanded]="student.expanded" (click)="toggleExpand(student)"
+          class="student-row">
+          <td class="student-info">
+            <div class="student-name">{{ student.name }}</div>
+            <div class="student-email">{{ student.email }}</div>
+          </td>
+          <td>
+            <div class="risk-score-container">
+              <div class="risk-bar-bg">
+                <div class="risk-bar-fill" [style.width.%]="student.riskScore"
+                  [class]="getRiskScoreColor(student.riskScore)"></div>
+              </div>
+              <span class="risk-value">{{ student.riskScore }}%</span>
+            </div>
+          </td>
+          <td>
+            <span class="risk-level" [class]="getRiskLevelClass(student.riskLevel)">
+              {{ student.riskLevel }}
+            </span>
+          </td>
+          <td>
+            <div class="performance-text">
+              {{ student.performance }}%
+            </div>
+          </td>
+          <td>
+            <div class="last-activity">
+              {{ student.lastActivity }}
+            </div>
+          </td>
+          <td class="actions-cell">
+            <button class="icon-btn" title="Voir détails"
+              (click)="viewStudentDetails(student); $event.stopPropagation()">
+              👁️
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Panneau d'actions détaillées (pour les lignes expandées) -->
+  <div *ngIf="hasExpandedStudents()" class="detailed-actions-panel">
+
+    <h4>Actions rapides</h4>
+    <div class="action-grid">
+      <button *ngFor="let action of actions" (click)="executeAction(action.id, getExpandedStudent())"
+        class="detailed-action-btn">
+        <span class="action-icon">{{ action.icon }}</span>
+        <span class="action-label">{{ action.label }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistiques résumées -->
+  <div class="table-footer">
+    <div class="stats-summary">
+      <div class="stat-item">
+        <span class="stat-label">Critique:</span>
+        <span class="stat-value critical">{{ criticalCount }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Élevé:</span>
+        <span class="stat-value high">{{ highCount }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Moyen:</span>
+        <span class="stat-value medium">{{ mediumCount }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Total:</span>
+        <span class="stat-value total">{{ totalStudents }}</span>
+      </div>
+    </div>
+  </div>
+</div>

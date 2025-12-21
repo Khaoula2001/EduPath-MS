@@ -1,0 +1,172 @@
+<div class="profiles-page">
+  <div class="page-header">
+    <h1 class="page-title">Profils d'Étudiants</h1>
+    <p class="page-subtitle">Analyse des clusters de comportement d'apprentissage</p>
+  </div>
+
+  <!-- Charts Grid -->
+  <div class="charts-grid">
+    <!-- Distribution Pie Chart -->
+    <div class="card">
+      <h3 class="chart-title">Distribution des Profils</h3>
+      <div class="pie-chart-wrapper">
+        <span class="pie-label label-assidu">Assidu (42%)</span>
+        <span class="pie-label label-moyen">Moyen (33%)</span>
+        <span class="pie-label label-procrast">Procrastinateur (17%)</span>
+        <span class="pie-label label-irreg">Irrégulier (8%)</span>
+
+        <svg width="220" height="220" viewBox="0 0 100 100">
+          <g transform="rotate(-60 50 50)">
+            <circle cx="50" cy="50" r="15.9155" fill="transparent" stroke="#10b981" stroke-width="32"
+              stroke-dasharray="42 58" stroke-dashoffset="0"></circle>
+            <circle cx="50" cy="50" r="15.9155" fill="transparent" stroke="#8b5cf6" stroke-width="32"
+              stroke-dasharray="8 92" stroke-dashoffset="-42"></circle>
+            <circle cx="50" cy="50" r="15.9155" fill="transparent" stroke="#ef4444" stroke-width="32"
+              stroke-dasharray="17 83" stroke-dashoffset="-50"></circle>
+            <circle cx="50" cy="50" r="15.9155" fill="transparent" stroke="#f59e0b" stroke-width="32"
+              stroke-dasharray="33 67" stroke-dashoffset="-67"></circle>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Performances Bar Chart -->
+    <div class="card">
+      <h3 class="chart-title">Performances par Profil</h3>
+      <div class="bar-chart-wrapper">
+        <svg width="100%" height="240" viewBox="0 0 400 240">
+          <!-- Grid Lines -->
+          <line x1="40" y1="40" x2="380" y2="40" stroke="#f1f5f9" stroke-dasharray="4"></line>
+          <line x1="40" y1="90" x2="380" y2="90" stroke="#f1f5f9" stroke-dasharray="4"></line>
+          <line x1="40" y1="140" x2="380" y2="140" stroke="#f1f5f9" stroke-dasharray="4"></line>
+          <line x1="40" y1="190" x2="380" y2="190" stroke="#f1f5f9" stroke-dasharray="4"></line>
+          <line x1="40" y1="240" x2="380" y2="240" stroke="#e2e8f0"></line>
+
+          <!-- Y Axis Labels -->
+          <text x="35" y="45" font-size="10" fill="#94a3b8" text-anchor="end">100</text>
+          <text x="35" y="95" font-size="10" fill="#94a3b8" text-anchor="end">75</text>
+          <text x="35" y="145" font-size="10" fill="#94a3b8" text-anchor="end">50</text>
+          <text x="35" y="195" font-size="10" fill="#94a3b8" text-anchor="end">25</text>
+          <text x="35" y="245" font-size="10" fill="#94a3b8" text-anchor="end">0</text>
+
+          <!-- Group Assidu (x=60) -->
+          <rect x="60" y="55" width="15" height="185" fill="#3b82f6"></rect><!-- Note 92 -->
+          <rect x="80" y="45" width="15" height="195" fill="#8b5cf6"></rect><!-- Pres 98 -->
+          <rect x="100" y="50" width="15" height="190" fill="#10b981"></rect><!-- Eng 95 -->
+          <text x="87" y="255" font-size="11" fill="#64748b" text-anchor="middle">Assidu</text>
+
+          <!-- Group Moyen (x=140) -->
+          <rect x="140" y="90" width="15" height="150" fill="#3b82f6"></rect><!-- Note 75 -->
+          <rect x="160" y="70" width="15" height="170" fill="#8b5cf6"></rect><!-- Pres 85 -->
+          <rect x="180" y="90" width="15" height="150" fill="#10b981"></rect><!-- Eng 75 -->
+          <text x="167" y="255" font-size="11" fill="#64748b" text-anchor="middle">Moyen</text>
+
+          <!-- Group Procrast (x=220) -->
+          <rect x="220" y="125" width="15" height="115" fill="#3b82f6"></rect><!-- Note 58 -->
+          <rect x="240" y="110" width="15" height="130" fill="#8b5cf6"></rect><!-- Pres 65 -->
+          <rect x="260" y="150" width="15" height="90" fill="#10b981"></rect><!-- Eng 45 -->
+          <text x="247" y="255" font-size="11" fill="#64748b" text-anchor="middle">Procrastinateur</text>
+
+          <!-- Group Irrégulier (x=300) -->
+          <rect x="300" y="116" width="15" height="124" fill="#3b82f6"></rect><!-- Note 62 -->
+          <rect x="320" y="100" width="15" height="140" fill="#8b5cf6"></rect><!-- Pres 70 -->
+          <rect x="340" y="130" width="15" height="110" fill="#10b981"></rect><!-- Eng 55 -->
+          <text x="327" y="255" font-size="11" fill="#64748b" text-anchor="middle">Irrégulier</text>
+        </svg>
+
+        <div class="bar-legend">
+          <div class="legend-item">
+            <div class="dot" style="background: #3b82f6;"></div>Note Moyenne
+          </div>
+          <div class="legend-item">
+            <div class="dot" style="background: #8b5cf6;"></div>Présence
+          </div>
+          <div class="legend-item">
+            <div class="dot" style="background: #10b981;"></div>Engagement
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Detail Cards Grid -->
+  <div class="profiles-grid">
+    <div class="card" *ngFor="let profile of profileCards">
+      <div class="profile-header">
+        <div>
+          <h4 class="profile-name">{{ profile.name }}</h4>
+          <p class="profile-desc">{{ profile.desc }}</p>
+        </div>
+        <div class="profile-icon" [ngClass]="'icon-' + profile.color">
+          <!-- Icon Switch -->
+          <svg *ngIf="profile.color === 'green'" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <svg *ngIf="profile.color === 'blue'" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <svg *ngIf="profile.color === 'red'" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <svg *ngIf="profile.color === 'purple'" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </div>
+      </div>
+
+      <div class="profile-stats">
+        <div class="stat-item">
+          <span class="stat-label">Étudiants</span>
+          <span class="stat-val">{{ profile.count }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Moy. Classe</span>
+          <span class="stat-val">{{ profile.avg }}</span>
+        </div>
+      </div>
+
+      <div class="students-list">
+        <div class="student-row" *ngFor="let s of profile.students">
+          <div class="student-initials">{{ s.initials }}</div>
+          <div class="student-info">
+            <span class="s-name">{{ s.name }}</span>
+            <span class="s-score">{{ s.score }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="more-students" *ngIf="profile.extra > 0">
+        +{{ profile.extra }} autre(s) étudiant(s)
+      </div>
+    </div>
+  </div>
+
+  <!-- Characteristics Section -->
+  <div class="characteristics-section">
+    <h3 class="section-title">Caractéristiques des Profils</h3>
+    <div class="char-grid">
+      <div class="char-card" [ngClass]="char.color" *ngFor="let char of characteristics">
+        <h4 class="char-title">{{ char.title }}</h4>
+        <ul class="char-list">
+          <li *ngFor="let point of char.points">{{ point }}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

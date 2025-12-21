@@ -1,0 +1,52 @@
+<div class="bar-chart-container">
+  <div class="header">
+    <h3 class="chart-title">Distribution des Notes</h3>
+    <span class="subtitle">Répartition par tranches de notes</span>
+  </div>
+
+  <div class="chart-wrapper">
+    <div class="chart-layout">
+      <!-- Y Axis -->
+      <div class="y-axis">
+        <div class="y-tick" *ngFor="let tick of yTicks">{{ tick }}</div>
+      </div>
+
+      <!-- Graph Area -->
+      <div class="graph-area">
+        <!-- Grid Lines -->
+        <div class="grid-lines">
+          <div class="grid-line" *ngFor="let tick of yTicks"></div>
+        </div>
+
+        <!-- Bars -->
+        <div class="bars-container">
+          <div *ngFor="let bar of bars; let i = index"
+               class="bar-column"
+               [class.hovered]="hoveredBar === i"
+               (mouseenter)="onBarHover(i)"
+               (mouseleave)="onBarLeave()">
+
+            <!-- Tooltip -->
+            <div class="tooltip"
+                 *ngIf="hoveredBar === i"
+                 [style.bottom.%]="getTooltipPosition(bar.value)">
+              <span class="tooltip-value">{{ bar.value }}</span>
+              <span class="tooltip-label">Étudiants</span>
+            </div>
+
+            <!-- Bar -->
+            <div class="bar-wrapper">
+              <div class="bar-fill"
+                   [style.height.%]="getBarHeight(bar.value)"
+                   [style.animation-delay]="getAnimationDelay(i)">
+              </div>
+            </div>
+
+            <!-- X Label -->
+            <div class="x-label">{{ bar.label }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

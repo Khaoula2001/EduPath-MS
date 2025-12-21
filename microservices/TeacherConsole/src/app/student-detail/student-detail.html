@@ -1,0 +1,158 @@
+<div class="student-detail-container">
+
+    <!-- Header -->
+    <div class="detail-header">
+        <div class="header-left">
+            <button class="back-btn" (click)="goBack()">←</button>
+            <div class="user-info">
+                <h2 class="student-name">{{ student.name }}</h2>
+                <div class="student-meta">
+                    <span>📧 {{ student.email }}</span>
+                    <span>•</span>
+                    <span>📅 Dernière activité: {{ student.lastActivity }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-right">
+            <span class="risk-badge">Risque Critique</span>
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="detail-stats">
+        <!-- Risk -->
+        <div class="stat-box risk">
+            <div class="stat-label">Score de risque</div>
+            <div class="stat-value">{{ student.riskScore }}%</div>
+            <div class="stat-bar">
+                <div class="stat-fill" [style.width.%]="student.riskScore"></div>
+            </div>
+        </div>
+        <!-- Performance -->
+        <div class="stat-box performance">
+            <div class="stat-label">Performance</div>
+            <div class="stat-value">{{ student.performance }}%</div>
+            <div class="stat-bar">
+                <div class="stat-fill" [style.width.%]="student.performance"></div>
+            </div>
+        </div>
+        <!-- Assiduité -->
+        <div class="stat-box attendance">
+            <div class="stat-label">Assiduité</div>
+            <div class="stat-value">{{ student.attendance }}%</div>
+            <div class="stat-bar">
+                <div class="stat-fill" [style.width.%]="student.attendance"></div>
+            </div>
+        </div>
+        <!-- Engagement -->
+        <div class="stat-box engagement">
+            <div class="stat-label">Engagement</div>
+            <div class="stat-value">{{ student.engagement }}%</div>
+            <div class="stat-bar">
+                <div class="stat-fill" [style.width.%]="student.engagement"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-section">
+        <div class="chart-title">Évolution temporelle (Analyse PathPredictor)</div>
+        <svg [attr.viewBox]="'0 0 ' + viewBoxWidth + ' ' + viewBoxHeight" class="detail-chart-svg">
+            <!-- Grid Lines -->
+            <line *ngFor="let i of [0, 25, 50, 75, 100]" [attr.x1]="padding"
+                [attr.y1]="viewBoxHeight - padding - (i * (viewBoxHeight - 2*padding)/100)"
+                [attr.x2]="viewBoxWidth - padding"
+                [attr.y2]="viewBoxHeight - padding - (i * (viewBoxHeight - 2*padding)/100)" stroke="#f3f4f6"
+                stroke-dasharray="0" />
+
+            <!-- Axis Labels -->
+            <g class="x-axis">
+                <text *ngFor="let label of chartWeeks; let i = index"
+                    [attr.x]="padding + (i * (viewBoxWidth - 2*padding) / (chartWeeks.length - 1))"
+                    [attr.y]="viewBoxHeight - 10" font-size="10" fill="#9ca3af" text-anchor="middle">
+                    {{ label }}
+                </text>
+            </g>
+
+            <!-- Paths -->
+            <g *ngFor="let s of chartSeries">
+                <path [attr.d]="getLinePath(s.data)" fill="none" [attr.stroke]="s.color" stroke-width="2" />
+
+                <!-- Dots -->
+                <circle *ngFor="let val of s.data; let i = index"
+                    [attr.cx]="padding + (i * (viewBoxWidth - 2*padding) / (chartWeeks.length - 1))"
+                    [attr.cy]="viewBoxHeight - padding - (val * (viewBoxHeight - 2*padding)/100)" r="3"
+                    [attr.fill]="s.color" />
+            </g>
+        </svg>
+        <div class="chart-legend">
+            <div *ngFor="let s of chartSeries" class="legend-item">
+                <span class="legend-dot-line" [style.color]="s.color">{{ s.name }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prediction Bar -->
+    <div class="prediction-bar">
+        <span class="pred-icon">⚠️</span>
+        <span><strong>Prédiction PathPredictor:</strong> {{ prediction.message }} Probabilité d'échec: {{
+            prediction.probability }}%. Intervention recommandée dans les {{ prediction.timeframe }}.</span>
+    </div>
+
+    <!-- Bottom Split (Alerts & Recos) -->
+    <div class="detail-bottom-grid">
+
+        <!-- Left: Alerts -->
+        <div class="alerts-column">
+            <div class="section-label">📢 Alertes PathPredictor</div>
+            <div class="alerts-list">
+                <div *ngFor="let alert of alerts" class="alert-card" [class.critical]="alert.level === 'critical'"
+                    [class.warning]="alert.level === 'high'">
+                    <div class="alert-icon">
+                        {{ alert.level === 'critical' ? '🔴' : '🟠' }}
+                    </div>
+                    <div class="alert-content-wrapper">
+                        <div class="alert-msg-title">{{ alert.message }}</div>
+                        <div class="alert-date-small">{{ alert.date }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Recos -->
+        <div class="recos-column">
+            <div class="section-label">✨ Recommandations RecoBuilder</div>
+            <div class="reco-list">
+                <div *ngFor="let reco of recommendations" class="reco-card">
+                    <div class="reco-icon">
+                        {{ reco.type === 'intervention' ? '🎓' : (reco.type === 'resource' ? '📚' : '💬') }}
+                    </div>
+                    <div class="reco-content">
+                        <div class="reco-header-line">
+                            <span class="reco-title-text">{{ reco.title }}</span>
+                            <span class="impact-badge">Impact élevé</span>
+                        </div>
+                        <div class="reco-desc-text">{{ reco.description }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer Profile Info -->
+    <div class="profile-footer">
+        <div class="footer-title">Informations du profil</div>
+        <div class="footer-grid">
+            <div class="footer-item">
+                <span class="footer-label">Cluster assigné</span>
+                <span class="footer-value">struggling</span>
+            </div>
+            <div class="footer-item">
+                <span class="footer-label">Identifiant</span>
+                <span class="footer-value">8</span>
+            </div>
+        </div>
+    </div>
+
+</div>

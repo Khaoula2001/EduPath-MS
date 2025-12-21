@@ -1,0 +1,365 @@
+.student-detail-container {
+    padding: 24px;
+    max-width: 1400px;
+    /* Wider to match screenshot */
+    margin: 0 auto;
+}
+
+/* Header */
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.header-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #6b7280;
+    padding-top: 4px;
+}
+
+.student-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.student-meta {
+    display: flex;
+    gap: 12px;
+    color: #6b7280;
+    font-size: 12px;
+    margin-top: 4px;
+    align-items: center;
+}
+
+.risk-badge {
+    background: #fef2f2;
+    color: #ef4444;
+    border: 1px solid #fecaca;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+/* Stats (KPI) Cards */
+.detail-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    /* 4 equal columns */
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.stat-box {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.stat-bar {
+    height: 4px;
+    width: 100%;
+    background: #f3f4f6;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.stat-fill {
+    height: 100%;
+    border-radius: 2px;
+}
+
+/* KPI Colors */
+.stat-box.risk .stat-fill {
+    background-color: #ef4444;
+}
+
+.stat-box.performance .stat-fill {
+    background-color: #3b82f6;
+}
+
+/* Blue */
+.stat-box.attendance .stat-fill {
+    background-color: #10b981;
+}
+
+/* Green */
+.stat-box.engagement .stat-fill {
+    background-color: #a855f7;
+}
+
+/* Purple */
+
+
+/* Chart Section */
+.chart-section {
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    border: 1px solid #e5e7eb;
+}
+
+.chart-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chart-title::before {
+    content: '📈';
+    /* Placeholder icon */
+    font-size: 16px;
+}
+
+.detail-chart-svg {
+    width: 100%;
+    height: 250px;
+}
+
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #4b5563;
+}
+
+.legend-dot-line {
+    display: flex;
+    align-items: center;
+    color: inherit;
+}
+
+.legend-dot-line::before {
+    content: '●-';
+    font-weight: bold;
+    margin-right: 4px;
+}
+
+
+/* Prediction Bar */
+.prediction-bar {
+    background-color: #fefce8;
+    /* Yellow-50 */
+    border: 1px solid #fef08a;
+    /* Yellow-200 */
+    padding: 12px 16px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    color: #854d0e;
+    /* Yellow-800 */
+    font-size: 13px;
+}
+
+.pred-icon {
+    font-size: 16px;
+}
+
+
+/* Bottom Split: Alerts & Recos */
+.detail-bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    /* 50/50 split */
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.section-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Alerts List */
+.alerts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.alert-card {
+    padding: 12px 16px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.alert-card.critical {
+    background-color: #fef2f2;
+    border-color: #fee2e2;
+    color: #991b1b;
+}
+
+.alert-card.warning {
+    background-color: #fff7ed;
+    border-color: #ffedd5;
+    color: #9a3412;
+}
+
+.alert-content-wrapper {
+    flex: 1;
+}
+
+.alert-msg-title {
+    font-weight: 500;
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.alert-date-small {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+/* Recos List */
+.reco-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.reco-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    padding: 16px;
+    border-radius: 6px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.reco-icon {
+    background: #eff6ff;
+    color: #3b82f6;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.reco-content {
+    flex: 1;
+}
+
+.reco-header-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 4px;
+}
+
+.reco-title-text {
+    font-weight: 600;
+    font-size: 13px;
+    color: #111827;
+}
+
+.impact-badge {
+    background: #f3e8ff;
+    color: #7e22ce;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.reco-desc-text {
+    font-size: 12px;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+/* Footer Info */
+.profile-footer {
+    margin-top: 32px;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 16px;
+}
+
+.footer-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 12px;
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+}
+
+.footer-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.footer-label {
+    font-size: 11px;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.footer-value {
+    font-size: 13px;
+    font-weight: 500;
+    color: #111827;
+}

@@ -1,0 +1,261 @@
+.students-page {
+    padding: 24px 32px;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.page-header {
+    margin-bottom: 32px;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 4px 0;
+}
+
+.page-subtitle {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0;
+}
+
+/* Filters Card */
+.filters-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    /* Slight shadow */
+}
+
+.search-input {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 0;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+}
+
+.search-input input {
+    width: 100%;
+    padding: 8px 8px 8px 32px;
+    border: none;
+    /* No border for input inside card */
+    font-size: 14px;
+    outline: none;
+    color: #1e293b;
+    background: transparent;
+}
+
+.search-input input::placeholder {
+    color: #94a3b8;
+}
+
+.filter-separator {
+    width: 1px;
+    height: 24px;
+    background: #e2e8f0;
+}
+
+.dropdown {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-icon {
+    display: flex;
+    align-items: center;
+    color: #94a3b8;
+}
+
+.dropdown select {
+    padding: 8px;
+    border: none;
+    /* No border */
+    background: transparent;
+    color: #64748b;
+    font-size: 14px;
+    cursor: pointer;
+    outline: none;
+    font-weight: 500;
+}
+
+/* Footer Card */
+.footer-card {
+    margin-top: 24px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px 24px;
+    color: #64748b;
+    font-size: 14px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Table */
+.table-container {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    /* Matching other cards */
+    overflow: hidden;
+}
+
+.students-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.students-table th {
+    text-align: left;
+    padding: 16px 24px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.students-table td {
+    padding: 16px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+.students-table tr:last-child td {
+    border-bottom: none;
+}
+
+.students-table tr:hover {
+    background-color: #f8fafc;
+}
+
+/* Student Info Column */
+.student-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #dbeafe;
+    /* Light blue bg */
+    color: #3b82f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.name-email {
+    display: flex;
+    flex-direction: column;
+}
+
+.student-name {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 14px;
+}
+
+.student-email {
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+/* Profile Badges */
+.profile-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.badge-green {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge-blue {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-orange {
+    background: #ffedd5;
+    color: #9a3412;
+}
+
+.badge-red {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.badge-purple {
+    background: #f3e8ff;
+    color: #6b21a8;
+}
+
+/* Risk Cell */
+.risk-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    font-size: 13px;
+    color: #475569;
+}
+
+.risk-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.dot-green {
+    background: #22c55e;
+}
+
+.dot-orange {
+    background: #f97316;
+}
+
+.dot-red {
+    background: #ef4444;
+}
+
+/* Action */
+.action-link {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.action-link:hover {
+    text-decoration: underline;
+}

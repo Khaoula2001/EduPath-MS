@@ -1,0 +1,11 @@
+<div class="alerts-container">
+  <div class="alerts-list">
+    <div *ngFor="let alert of alerts" class="alert-item" [ngClass]="'type-' + alert.type" (click)="toggleRead(alert)">
+      <div class="alert-icon"></div> <!-- Just the dot -->
+      <div class="alert-content">
+        <div class="alert-message">{{ alert.message }}</div>
+        <div class="alert-date">{{ alert.date }}</div>
+      </div>
+    </div>
+  </div>
+</div>

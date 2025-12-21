@@ -1,0 +1,128 @@
+<div class="alerts-page">
+  <div class="page-header">
+    <h1 class="page-title">Alertes et Notifications</h1>
+    <p class="page-subtitle">Suivi des étudiants nécessitant une attention particulière</p>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card" [ngClass]="stat.color" *ngFor="let stat of stats">
+      <div class="stat-info">
+        <span class="stat-label">{{ stat.label }}</span>
+        <span class="stat-value">{{ stat.count }}</span>
+      </div>
+      <div class="stat-icon">
+        <!-- Simple SVG Icon based on type -->
+        <svg *ngIf="stat.icon === 'warning'" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <svg *ngIf="stat.icon === 'error'" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <svg *ngIf="stat.icon === 'info'" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-card">
+    <div class="dropdown-wrapper">
+      <span class="filter-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+      </span>
+      <select [(ngModel)]="selectedSeverity">
+        <option>Toutes les sévérités</option>
+        <option>Urgentes</option>
+        <option>Moyennes</option>
+        <option>Mineures</option>
+      </select>
+    </div>
+    <div class="dropdown-wrapper">
+      <span class="filter-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+      </span>
+      <select [(ngModel)]="selectedType">
+        <option>Tous les types</option>
+        <option>Performance</option>
+        <option>Absence</option>
+        <option>Engagement</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Alertes Urgentes Section -->
+  <div class="alerts-section" *ngIf="filteredUrgentAlerts.length > 0">
+    <div class="section-header red">
+      Alertes Urgentes ({{ filteredUrgentAlerts.length }})
+    </div>
+    <div class="alert-list">
+      <div class="alert-item" *ngFor="let alert of filteredUrgentAlerts">
+        <div class="student-avatar">{{ alert.initials }}</div>
+        <div class="alert-content">
+          <div class="alert-top-row">
+            <span class="student-name">{{ alert.name }}</span>
+            <span class="tag" [ngClass]="getTypeClass(alert.typeColor)">{{ alert.type }}</span>
+          </div>
+          <div class="msg-title">{{ alert.message }}</div>
+          <div class="alert-meta">
+            <span>{{ alert.date }}</span>
+            <span>•</span>
+            <span>Note: {{ alert.note }}</span>
+            <span>•</span>
+            <span>Présence: {{ alert.presence }}</span>
+          </div>
+        </div>
+        <div class="alert-actions">
+          <span class="priority-badge urgent">{{ alert.priority }}</span>
+          <a href="#" class="details-link">Voir détails</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alertes Moyennes Section -->
+  <div class="alerts-section" *ngIf="filteredMediumAlerts.length > 0">
+    <div class="section-header orange">
+      Alertes Moyennes ({{ filteredMediumAlerts.length }})
+    </div>
+    <div class="alert-list">
+      <div class="alert-item" *ngFor="let alert of filteredMediumAlerts">
+        <div class="student-avatar">{{ alert.initials }}</div>
+        <div class="alert-content">
+          <div class="alert-top-row">
+            <span class="student-name">{{ alert.name }}</span>
+            <span class="tag" [ngClass]="getTypeClass(alert.typeColor)">{{ alert.type }}</span>
+          </div>
+          <div class="msg-title">{{ alert.message }}</div>
+          <div class="alert-meta">
+            <span>{{ alert.date }}</span>
+            <span>•</span>
+            <span>Note: {{ alert.note }}</span>
+            <span>•</span>
+            <span>Présence: {{ alert.presence }}</span>
+          </div>
+        </div>
+        <div class="alert-actions">
+          <span class="priority-badge moyen">{{ alert.priority }}</span>
+          <a href="#" class="details-link">Voir détails</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,56 @@
+<div class="risk-heatmap">
+  <h3 class="heatmap-title">Heatmap des Risques</h3>
+  <div class="heatmap-container">
+    <table class="heatmap-table">
+      <thead>
+      <tr>
+        <th>Étudiant</th>
+        <th>Performance</th>
+        <th>Assiduité</th>
+        <th>Engagement</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let student of students">
+        <td class="student-info">
+          <div class="student-name">{{ student.name }}</div>
+          <div class="student-email">{{ student.email }}</div>
+        </td>
+        <td>
+          <div class="performance-cell" [class]="getPerformanceClass(student.performance)">
+            {{ student.performance }}%
+          </div>
+        </td>
+        <td>
+          <div class="performance-cell" [class]="getPerformanceClass(student.attendance)">
+            {{ student.attendance }}%
+          </div>
+        </td>
+        <td>
+          <div class="performance-cell" [class]="getPerformanceClass(student.engagement)">
+            {{ student.engagement }}%
+          </div>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+    <div class="heatmap-legend">
+      <div class="legend-item">
+        <span class="legend-color good"></span>
+        <span>Bon (>80%)</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color medium"></span>
+        <span>Moyen (60-80%)</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color low"></span>
+        <span>Faible (40-60%)</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color critical"></span>
+        <span>Critique (<40%)</span>
+      </div>
+    </div>
+  </div>
+</div>
