@@ -1,0 +1,63 @@
+.alerts-container {
+  /* No special container style needed, handled by dashboard grid */
+}
+
+.alert-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.alert-item:last-child {
+  border-bottom: none;
+}
+
+.alert-item:first-child {
+  padding-top: 0;
+}
+
+
+.alert-icon {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+/* Types */
+.type-critical .alert-icon {
+  background-color: #ef4444;
+}
+
+.type-warning .alert-icon {
+  background-color: #f97316;
+}
+
+.type-info .alert-icon {
+  background-color: #3b82f6;
+}
+
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-message {
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.4;
+  margin-bottom: 2px;
+}
+
+.alert-date {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.alert-item:hover .alert-message {
+  color: #2563eb;
+}

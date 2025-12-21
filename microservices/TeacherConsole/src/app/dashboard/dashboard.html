@@ -1,0 +1,38 @@
+<div class="dashboard-container">
+
+  <div class="page-header">
+    <h2 class="page-title">{{ dashboardTitle }}</h2>
+    <p class="page-subtitle">{{ subTitle }}</p>
+  </div>
+
+  <!-- Row 1: Stats Cards -->
+  <app-stats-cards></app-stats-cards>
+
+  <!-- Row 2: Charts (Line + Pie) -->
+  <div class="grid-row-2">
+    <div class="chart-panel">
+      <!-- Reusing Performance Chart but it needs to be styled to match "Evolution des Performances" -->
+      <app-performance-chart></app-performance-chart>
+    </div>
+    <div class="chart-panel">
+      <app-pie-chart></app-pie-chart>
+    </div>
+  </div>
+
+  <!-- Row 3: Bar Chart + Alerts -->
+  <div class="grid-row-3">
+    <div class="chart-panel">
+      <app-bar-chart></app-bar-chart>
+    </div>
+    <div class="chart-panel alerts-panel">
+      <h3 class="panel-title-overlay">Alertes Récentes</h3>
+      <app-alerts-list></app-alerts-list>
+    </div>
+  </div>
+
+  <!-- Row 4: Risk Heatmap Cards -->
+  <div class="grid-row-4">
+    <app-risk-heatmap></app-risk-heatmap>
+  </div>
+
+</div>

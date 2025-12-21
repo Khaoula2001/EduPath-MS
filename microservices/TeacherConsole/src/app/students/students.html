@@ -1,0 +1,123 @@
+<div class="students-page">
+    <div class="page-header">
+        <h1 class="page-title">Étudiants</h1>
+        <p class="page-subtitle">Liste complète de vos étudiants</p>
+    </div>
+
+    <!-- Filters Card -->
+    <div class="filters-card">
+        <div class="search-input">
+            <span class="search-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </span>
+            <input type="text" [(ngModel)]="searchTerm" placeholder="Rechercher un étudiant...">
+        </div>
+
+        <div class="filter-separator"></div>
+
+        <div class="dropdown">
+            <span class="filter-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+            </span>
+            <select [(ngModel)]="selectedRisk">
+                <option>Tous les risques</option>
+                <option>Low</option>
+                <option>Medium</option>
+                <option>High</option>
+            </select>
+        </div>
+
+        <div class="filter-separator"></div>
+
+        <div class="dropdown">
+            <span class="filter-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+            </span>
+            <select [(ngModel)]="selectedProfile">
+                <option>Tous les profils</option>
+                <option>Assidu</option>
+                <option>Moyen</option>
+                <option>Irrégulier</option>
+                <option>Procrastinateur</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Students Table -->
+    <div class="table-container">
+        <table class="students-table">
+            <thead>
+                <tr>
+                    <th>ÉTUDIANT</th>
+                    <th>PROFIL</th>
+                    <th>NOTE</th>
+                    <th>PRÉSENCE</th>
+                    <th>ENGAGEMENT</th>
+                    <th>DEVOIRS</th>
+                    <th>RISQUE</th>
+                    <th>ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let student of filteredStudents">
+                    <!-- Student Column -->
+                    <td>
+                        <div class="student-info">
+                            <div class="avatar-circle">{{ student.initials }}</div>
+                            <div class="name-email">
+                                <div class="student-name">{{ student.name }}</div>
+                                <div class="student-email">{{ student.email }}</div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Profile Badge -->
+                    <td>
+                        <span class="profile-badge" [ngClass]="getProfileClass(student.profileColor)">
+                            {{ student.profile }}
+                        </span>
+                    </td>
+
+                    <!-- Stats -->
+                    <td>{{ student.note }}</td>
+                    <td>{{ student.presence }}</td>
+                    <td>{{ student.engagement }}</td>
+                    <td>{{ student.homework }}</td>
+
+                    <!-- Risk -->
+                    <td>
+                        <div class="risk-cell">
+                            <span class="risk-dot" [ngClass]="getRiskDotClass(student.riskColor)"></span>
+                            {{ student.risk }}
+                        </div>
+                    </td>
+
+                    <!-- Action -->
+                    <td>
+                        <a href="#" class="action-link">Détails</a>
+                    </td>
+                </tr>
+                <tr *ngIf="filteredStudents.length === 0">
+                    <td colspan="8" style="text-align: center; padding: 24px; color: #64748b;">
+                        Aucun étudiant trouvé.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Footer Card -->
+    <div class="footer-card">
+        Affichage de {{ filteredStudents.length }} étudiant(s) sur {{ students.length }}
+    </div>
+</div>

@@ -1,0 +1,336 @@
+/* Container principal */
+.bar-chart-container {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 32px 40px;
+  border: 1px solid #e5e7eb;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05),
+  0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  transition: box-shadow 0.3s ease;
+}
+
+.bar-chart-container:hover {
+  box-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.08),
+  0 8px 15px -6px rgba(0, 0, 0, 0.03);
+}
+
+/* ========== En-tête ========== */
+.header {
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+.chart-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #111827 0%, #374151 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+  display: block;
+  letter-spacing: -0.01em;
+}
+
+/* ========== Layout du graphique ========== */
+.chart-wrapper {
+  flex: 1;
+  display: flex;
+  min-height: 300px;
+}
+
+.chart-layout {
+  display: flex;
+  width: 100%;
+  gap: 12px;
+}
+
+/* ========== Axe Y ========== */
+.y-axis {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: space-between;
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 600;
+  padding-right: 16px;
+  padding-bottom: 32px;
+  min-width: 30px;
+}
+
+.y-tick {
+  height: 20px;
+  display: flex;
+  align-items: center;
+}
+
+/* ========== Zone du graphique ========== */
+.graph-area {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========== Lignes de grille ========== */
+.grid-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 32px;
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: space-between;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.grid-line {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%);
+  opacity: 0.7;
+}
+
+/* ========== Container des barres ========== */
+.bars-container {
+  flex: 1;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  padding-bottom: 32px;
+  padding: 0 8px 32px 8px;
+  position: relative;
+  z-index: 10;
+  gap: 8px;
+}
+
+/* ========== Colonne de barre ========== */
+.bar-column {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  max-width: 80px;
+  transition: transform 0.2s ease;
+}
+
+.bar-column:hover {
+  transform: scale(1.02);
+}
+
+/* ========== Wrapper de barre ========== */
+.bar-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 8px;
+}
+
+/* ========== Barre (fill) ========== */
+.bar-fill {
+  width: 100%;
+  max-width: 48px;
+  background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
+  border-radius: 8px 8px 0 0;
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25),
+  inset 0 -2px 8px rgba(37, 99, 235, 0.3);
+
+  /* Animation de croissance */
+  animation: growUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Effet de brillance sur la barre */
+.bar-fill::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(180deg,
+  rgba(255, 255, 255, 0.4) 0%,
+  rgba(255, 255, 255, 0) 100%);
+  border-radius: 8px 8px 0 0;
+}
+
+/* Animation de croissance des barres */
+@keyframes growUp {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ========== Effet de survol sur les barres ========== */
+.bar-column.hovered .bar-fill {
+  background: linear-gradient(180deg, #93c5fd 0%, #60a5fa 50%, #3b82f6 100%);
+  transform: translateY(-4px) scaleY(1.02);
+  box-shadow: 0 12px 24px rgba(59, 130, 246, 0.4),
+  0 6px 12px rgba(59, 130, 246, 0.2),
+  inset 0 -2px 12px rgba(37, 99, 235, 0.4);
+}
+
+/* ========== Étiquettes de l'axe X ========== */
+.x-label {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  position: absolute;
+  bottom: 0;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.bar-column.hovered .x-label {
+  color: #2563eb;
+  font-weight: 700;
+  transform: translateY(-2px);
+}
+
+/* ========== Tooltip ========== */
+.tooltip {
+  position: absolute;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  opacity: 0;
+  animation: tooltipFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25),
+  0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  z-index: 100;
+  min-width: 70px;
+}
+
+/* Flèche du tooltip */
+.tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: #0f172a transparent transparent transparent;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Animation d'apparition du tooltip */
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Valeur dans le tooltip */
+.tooltip-value {
+  font-weight: 800;
+  font-size: 18px;
+  line-height: 1;
+  margin-bottom: 4px;
+  background: linear-gradient(135deg, #ffffff 0%, #93c5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Label dans le tooltip */
+.tooltip-label {
+  font-size: 10px;
+  opacity: 0.9;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ========== Design Responsive ========== */
+@media (max-width: 768px) {
+  .bar-chart-container {
+    padding: 24px 20px;
+  }
+
+  .chart-title {
+    font-size: 18px;
+  }
+
+  .subtitle {
+    font-size: 11px;
+  }
+
+  .bar-fill {
+    max-width: 36px;
+  }
+
+  .x-label {
+    font-size: 10px;
+  }
+}
+
+/* ========== Accessibilité ========== */
+@media (prefers-reduced-motion: reduce) {
+  .bar-fill,
+  .tooltip,
+  .bar-column {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* ========== Mode sombre (optionnel) ========== */
+@media (prefers-color-scheme: dark) {
+  .bar-chart-container {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .chart-title {
+    background: linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .subtitle {
+    color: #9ca3af;
+  }
+
+  .grid-line {
+    background: linear-gradient(90deg, #374151 0%, #4b5563 50%, #374151 100%);
+  }
+}

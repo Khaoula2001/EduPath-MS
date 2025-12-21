@@ -1,0 +1,64 @@
+.performance-chart {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.chart-title {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.chart-container {
+  position: relative;
+  width: 100%;
+}
+
+.chart-svg {
+  width: 100%;
+  height: auto;
+  max-height: 300px;
+}
+
+.axis-label {
+  font-size: 12px;
+  fill: #9ca3af;
+  font-family: inherit;
+}
+
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  /* Mockup shows slightly custom bullets, simple circle is fine */
+  /* Mockup actually shows: small line with dot? Let's check image. */
+  /* Image 3: "Performance moyenne" (Blue dot-line), "Assidiute" (Green dot-line). */
+  /* Legend uses a small dash + dot symbol. */
+  /* Keep it simple: dot. */
+  width: 12px;
+  height: 4px;
+  /* Line style */
+  border-radius: 2px;
+}
+
+.legend-text {
+  font-size: 13px;
+  color: var(--text-gray);
+  font-weight: 500;
+}
