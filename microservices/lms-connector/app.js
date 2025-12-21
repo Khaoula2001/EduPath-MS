@@ -7,11 +7,11 @@ const app = express();
 app.use(express.json());
 
 const pool = new Pool({
-  user: 'admin',
-  host: 'postgres',
-  database: 'edupath',
-  password: 'admin123',
-  port: 5432,
+  user: process.env.DB_USER || 'prepadata',
+  host: process.env.DB_HOST || 'postgres',
+  database: process.env.DB_NAME || 'analytics',
+  password: process.env.DB_PASSWORD || 'prepadata_pwd',
+  port: process.env.DB_PORT || 5432,
 });
 
 // Endpoint pour synchroniser les données Moodle

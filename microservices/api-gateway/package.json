@@ -1,0 +1,14 @@
+{
+  "name": "edupath-api-gateway",
+  "version": "1.0.0",
+  "description": "GraphQL API Gateway for EduPath-MS",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@apollo/server": "^4.0.0",
+    "graphql": "^16.0.0",
+    "axios": "^1.0.0"
+  }
+}

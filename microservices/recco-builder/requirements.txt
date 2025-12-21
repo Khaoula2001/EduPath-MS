@@ -1,0 +1,6 @@
+flask
+transformers
+torch
+faiss-cpu
+psycopg2-binary
+sqlalchemy

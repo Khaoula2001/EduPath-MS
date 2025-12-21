@@ -1,0 +1,88 @@
+import joblib
+import pandas as pd
+import logging
+import os
+from sqlalchemy.orm import Session
+from app.models.domain import StudentProfile
+from app.schemas.pydantic_models import StudentFeatures, PredictionResult
+from app.core.config import settings
+
+logger = logging.getLogger(__name__)
+
+# Construct path relative to the app root
+MODEL_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), settings.MODEL_FILENAME)
+
+class ProfilingService:
+    def __init__(self):
+        self.pipeline = None
+        self.load_model()
+        
+        self.cluster_profile_map = {
+            0: "En difficulté (At-Risk)",
+            1: "Assidu (Regular)",
+            2: "Procrastinateur (Procrastinator)",
+        }
+
+    def load_model(self):
+        """Loads the pre-trained ML pipeline."""
+        if os.path.exists(MODEL_PATH):
+            try:
+                self.pipeline = joblib.load(MODEL_PATH)
+                logger.info(f"Model loaded successfully from {MODEL_PATH}")
+            except Exception as e:
+                logger.error(f"Failed to load model from {MODEL_PATH}: {e}")
+                raise e
+        else:
+            logger.warning(f"Model file not found at {MODEL_PATH}. Prediction service will fail.")
+
+    def predict_profile(self, features: StudentFeatures, db: Session) -> PredictionResult:
+        if not self.pipeline:
+            raise ValueError("Model pipeline is not loaded.")
+
+        data = {
+            "total_clicks": [features.total_clicks],
+            "assessment_submissions_count": [features.assessment_submissions_count],
+            "mean_score": [features.mean_score],
+            "active_days": [features.active_days],
+            "study_duration": [features.study_duration],
+            "progress_rate": [features.progress_rate]
+        }
+        df = pd.DataFrame(data)
+
+        try:
+            logger.info(f"Processing prediction for student {features.student_id}")
+            
+            cluster_id = self.pipeline.predict(df)[0]
+            cluster_id = int(cluster_id)
+            
+            logger.info(f"Predicted cluster: {cluster_id}")
+
+            profil_type = self.cluster_profile_map.get(cluster_id, "Unknown")
+            
+            student_profile = db.query(StudentProfile).filter(StudentProfile.student_id == features.student_id).first()
+            
+            if student_profile:
+                logger.info(f"Updating existing profile for student {features.student_id}")
+                student_profile.cluster_id = cluster_id
+                student_profile.profil_type = profil_type
+                student_profile.timestamp = pd.Timestamp.now()
+            else:
+                logger.info(f"Creating new profile for student {features.student_id}")
+                student_profile = StudentProfile(
+                    student_id=features.student_id,
+                    cluster_id=cluster_id,
+                    profil_type=profil_type
+                )
+                db.add(student_profile)
+            
+            db.commit()
+            db.refresh(student_profile)
+
+            return PredictionResult.from_orm(student_profile)
+
+        except Exception as e:
+            logger.error(f"Error during prediction pipeline: {e}")
+            db.rollback()
+            raise e
+
+profiling_service = ProfilingService()

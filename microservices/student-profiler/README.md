@@ -1,50 +1,79 @@
-# Student Profiler Microservice
+# StudentProfiler Microservice
 
-## Description
-Le microservice Student Profiler agrège les indicateurs d'engagement et de performance des étudiants (issus de `analytics.student_features`) pour réaliser un clustering de profils avec PCA + KMeans. Les affectations de clusters sont persistées dans PostgreSQL (`analytics_student_profiles`).
+Ce microservice est responsable de l'analyse des comportements des étudiants et de leur classification (clustering) basés sur des données d'apprentissage.
 
-Cette implémentation minimale fournie ici expose une API FastAPI et un service d'entraînement.
+## Architecture
 
-## Prérequis
-- Python 3.10+
-- PostgreSQL (optionnel) ou SQLite (utilisé par défaut en local via `DATABASE_URL`)
+Le projet suit une architecture modulaire basée sur FastAPI :
 
-## Installation
-```powershell
-cd microservices/student-profiler
-python -m venv .venv
-.\.venv\Scripts\activate
-pip install -r requirements.txt
+```
+student-profiler/
+├── app/
+│   ├── api/                 # Gestion des routes API (Endpoints)
+│   ├── core/                # Configuration et connexion Base de Données
+│   ├── models/              # Modèles SQLAlchemy (Table PostgreSQL)
+│   ├── schemas/             # Schémas Pydantic (Validation des données)
+│   ├── services/            # Logique Métier (Chargement modèle ML, Prédiction)
+│   └── main.py              # Point d'entrée de l'application
+├── Dockerfile               # Configuration Docker
+├── requirements.txt         # Dépendances Python
+└── student_profiler_model.joblib # Modèle ML pré-entraîné
 ```
 
-## Configuration
-- Fichier de configuration par défaut : `config/model_config.yaml`
-- Vous pouvez définir `DATABASE_URL` pour pointer vers votre base de données (ex: `postgresql+psycopg2://user:pass@host:5432/dbname`) ; sinon les variables `PG_HOST`/`PG_DB`/... seront utilisées.
+## Fonctionnalités
 
-## Endpoints
-- `POST /train` : entraîne PCA + KMeans, sauvegarde l'artifact Joblib et (ré)écrit `analytics_student_profiles`.
-- `GET /profiles/{id_student}` : retourne le cluster le plus récent pour un étudiant.
+1.  **Prédiction de Cluster** : Reçoit des metrics étudiants, applique un pipeline ML (Imputation, Scaling, PCA, KMeans) et retourne le cluster et le type de profil.
+2.  **Stockage** : Sauvegarde ou met à jour le profil étudiant dans une base PostgreSQL (`student_profiles`).
 
-## Lancement API
-```powershell
-uvicorn src.api:app --reload
+## Installation et Exécution avec Docker Compose (Recommandé)
+
+Le service est configuré pour fonctionner dans l'écosystème **EduPath-MS**.
+
+```bash
+docker-compose up -d postgres student-profiler
 ```
 
-## Mode de test (rapide)
-Le test utilise une base SQLite temporaire pour vérifier le cycle d'entraînement et la récupération d'un profil.
+Le service sera accessible sur `http://localhost:8000`.
 
-```powershell
-pip install -r requirements.txt
-pytest -q
+## Utilisation avec Postman
+
+### Endpoint : `/predict_clusters`
+- **Méthode** : `POST`
+- **URL** : `http://localhost:8000/predict_clusters`
+- **Headers** : `Content-Type: application/json`
+- **Body (Raw JSON)** :
+
+```json
+{
+  "student_id": 12345,
+  "total_clicks": 1500,
+  "assessment_submissions_count": 5,
+  "mean_score": 85.5,
+  "active_days": 120,
+  "study_duration": 4500.0,
+  "progress_rate": 0.92
+}
 ```
 
-## Structure
-- `src/` : code source (API, service, DB)
-- `config/model_config.yaml` : paramètres du modèle et colonnes utilisées
-- `artifacts/` : modèles sauvegardés
-- `tests/` : tests unitaires
+### Réponse Attendue (Exemple)
+```json
+{
+    "student_id": 12345,
+    "cluster_id": 1,
+    "profil_type": "Assidu (Regular)",
+    "timestamp": "2025-12-21T17:50:00.000000"
+}
+```
 
-## Remarques
-- Le service lit la table `analytics_student_features` (ou `analytics_student_features` en SQLite) qui doit contenir au moins une colonne `student_id` et les colonnes listées dans `config/model_config.yaml`.
-- En production, adaptez la persistance (upsert plutôt qu'append) et gérez la rotation des artefacts.
+### Health Check
+- **Méthode** : `GET`
+- **URL** : `http://localhost:8000/health`
 
+## Docker
+
+Pour construire et lancer avec Docker manuellement :
+
+```bash
+docker build -t student-profiler .
+docker run -p 8000:8000 --env PG_HOST=host.docker.internal --env PG_USER=prepadata --env PG_PASSWORD=prepadata_pwd --env PG_DB=analytics student-profiler
+```

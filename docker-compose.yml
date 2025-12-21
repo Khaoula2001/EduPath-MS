@@ -12,7 +12,7 @@ services:
       POSTGRES_PASSWORD: prepadata_pwd
       POSTGRES_DB: analytics
     volumes:
-      - ./sql:/docker-entrypoint-initdb.d:ro
+      - ./microservices/prepa-data/sql:/docker-entrypoint-initdb.d:ro
     ports:
       - "5432:5432"
     healthcheck:
@@ -120,7 +120,8 @@ services:
     image: python:3.10-slim
     container_name: prepadata_service
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       PG_HOST: postgres
       PG_PORT: 5432
@@ -139,13 +140,31 @@ services:
       tail -f /dev/null
       "
 
+  lms-connector:
+    build:
+      context: ./microservices/lms-connector
+      dockerfile: Dockerfile
+    container_name: lms_connector_service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: analytics
+      DB_USER: prepadata
+      DB_PASSWORD: prepadata_pwd
+    ports:
+      - "3000:3000"
+
   student-profiler:
     build:
       context: ./microservices/student-profiler
       dockerfile: Dockerfile
     container_name: student_profiler_service
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       PG_HOST: postgres
       PG_PORT: 5432
@@ -156,6 +175,107 @@ services:
       - ./microservices/student-profiler:/app
     ports:
       - "8000:8000"
+
+  path-predictor:
+    build:
+      context: ./microservices/path-predictor
+      dockerfile: Dockerfile
+    container_name: path_predictor_service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DB: analytics
+      PG_USER: prepadata
+      PG_PASSWORD: prepadata_pwd
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    ports:
+      - "8002:8002"
+
+  reco-builder:
+    build:
+      context: ./microservices/recco-builder
+      dockerfile: Dockerfile
+    container_name: reco_builder_service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DB: analytics
+      PG_USER: prepadata
+      PG_PASSWORD: prepadata_pwd
+    ports:
+      - "8003:8003"
+
+  teacher-console-api:
+    build:
+      context: ./microservices/teacher-console-api
+      dockerfile: Dockerfile
+    container_name: teacher_console_api_service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DB: analytics
+      PG_USER: prepadata
+      PG_PASSWORD: prepadata_pwd
+    ports:
+      - "8004:8004"
+
+  student-coach-api:
+    build:
+      context: ./microservices/student-coach-api
+      dockerfile: Dockerfile
+    container_name: student_coach_api_service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DB: analytics
+      PG_USER: prepadata
+      PG_PASSWORD: prepadata_pwd
+    ports:
+      - "8005:8005"
+
+  api-gateway:
+    build:
+      context: ./microservices/api-gateway
+      dockerfile: Dockerfile
+    container_name: api_gateway
+    depends_on:
+      - lms-connector
+      - student-profiler
+      - path-predictor
+      - reco-builder
+      - teacher-console-api
+      - student-coach-api
+    ports:
+      - "4000:4000"
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.7.1
+    container_name: mlflow_server
+    ports:
+      - "5000:5000"
+    command: mlflow server --host 0.0.0.0
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
 
   rabbitmq:
     image: rabbitmq:3.11-management-alpine
