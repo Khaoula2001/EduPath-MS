@@ -1,9 +1,26 @@
-version: '3.8'
+#version: '3.8'
 
 services:
   # ==========================================
   # PostgreSQL Database - ULTRA LÉGER
   # ==========================================
+#  postgres:
+#    image: postgres:15-alpine
+#    container_name: prepadata_postgres
+#    environment:
+#      POSTGRES_USER: prepadata
+#      POSTGRES_PASSWORD: prepadata_pwd
+#      POSTGRES_DB: analytics
+#    volumes:
+#      - ./microservices/prepa-data/sql:/docker-entrypoint-initdb.d:ro
+#    ports:
+#      - "5432:5432"
+#    healthcheck:
+#      test: ["CMD-SHELL", "pg_isready -U prepadata -d analytics"]
+#      interval: 5s
+#      timeout: 5s
+#      retries: 5
+
   postgres:
     image: postgres:15-alpine
     container_name: prepadata_postgres
@@ -12,14 +29,19 @@ services:
       POSTGRES_PASSWORD: prepadata_pwd
       POSTGRES_DB: analytics
     volumes:
+      - postgres_data:/var/lib/postgresql/data  # Changement important ici
       - ./microservices/prepa-data/sql:/docker-entrypoint-initdb.d:ro
     ports:
       - "5432:5432"
+    restart: unless-stopped  # Ajoutez cette ligne
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U prepadata -d analytics"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      test: [ "CMD-SHELL", "pg_isready -U prepadata -d analytics" ]
+      interval: 10s  # Augmentez l'intervalle
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+
 
   # ==========================================
   # Apache Airflow - VERSION OFFICIELLE
@@ -80,11 +102,13 @@ services:
       - ./microservices/prepa-data/data:/opt/prepadata/data
       - ./microservices/prepa-data/config:/opt/prepadata/config
     ports:
-      - "8080:8080"
+      - "8081:8080"
     command: >
       bash -c "
+      echo '=== UPGRADE PIP ===' &&
+      pip install --upgrade pip &&
       echo '=== INSTALL DEPENDENCIES ===' &&
-      pip install --no-cache-dir scikit-learn==1.3.0 pandas numpy && 
+      pip install --default-timeout=1000 --retries=10 --no-cache-dir scikit-learn==1.3.0 pandas numpy && 
       sleep 5 &&
       echo '=== DEMARRAGE WEBSERVER ===' &&
       airflow webserver --port 8080
@@ -109,8 +133,10 @@ services:
       - ./microservices/prepa-data/config:/opt/prepadata/config
     command: >
       bash -c "
+      echo '=== UPGRADE PIP ===' &&
+      pip install --upgrade pip &&
       echo '=== INSTALL DEPENDENCIES ===' &&
-      pip install --no-cache-dir scikit-learn==1.3.0 pandas numpy && 
+      pip install --default-timeout=1000 --retries=10 --no-cache-dir scikit-learn==1.3.0 pandas numpy && 
       sleep 10 &&
       echo '=== DEMARRAGE SCHEDULER ===' &&
       airflow scheduler
@@ -135,7 +161,8 @@ services:
       - ./microservices/prepa-data/requirements.txt:/opt/prepadata/requirements.txt
     command: >
       bash -c "
-      pip install --no-cache-dir pandas numpy scikit-learn sqlalchemy psycopg2-binary &&
+      pip install --upgrade pip &&
+      pip install --default-timeout=1000 --retries=10 --no-cache-dir pandas numpy scikit-learn sqlalchemy psycopg2-binary &&
       echo 'PrepData Microservice ready!' &&
       tail -f /dev/null
       "
@@ -155,7 +182,7 @@ services:
       DB_USER: prepadata
       DB_PASSWORD: prepadata_pwd
     ports:
-      - "3000:3000"
+      - "3001:3000"
 
   student-profiler:
     build:
@@ -291,4 +318,22 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  minio:
+    image: minio/minio
+    container_name: minio_server
+    ports:
+      - "9999:9000"    # Changed from 9000
+      - "9998:9001"    # Changed from 9001
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadminpassword
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+# Ajoutez à la fin du fichier :
+volumes:
+    postgres_data:
+    minio_data:
 
