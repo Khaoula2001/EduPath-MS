@@ -1,7 +1,7 @@
 fastapi
 uvicorn
-pandas
 xgboost
-mlflow
-psycopg2-binary
-sqlalchemy
+scikit-learn
+joblib
+numpy
+pandas

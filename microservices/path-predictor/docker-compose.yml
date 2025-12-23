@@ -1,0 +1,9 @@
+version: "3.9"
+services:
+  api:
+    build: .
+    image: pathpredictor:latest
+    container_name: pathpredictor-api
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
