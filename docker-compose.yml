@@ -70,7 +70,7 @@ services:
       echo '=== INSTALL DEPENDENCIES ===' &&
       pip install --default-timeout=1000 --retries=10 --no-cache-dir scikit-learn>=1.6.1 pandas numpy &&
       echo '=== ATTENTE POSTGRESQL ===' &&
-      until PGPASSWORD=prepadata_pwd psql -h postgres -U prepadata -d prepadata_db -c 'SELECT 1' >/dev/null 2>&1; do
+      until PGPASSWORD=prepadata_pwd psql -h postgres -U prepadata -d analytics -c 'SELECT 1' >/dev/null 2>&1; do
         echo 'En attente de PostgreSQL...';
         sleep 2;
       done &&
