@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-risk-heatmap',
@@ -24,7 +25,7 @@ import { CommonModule } from '@angular/common';
           </div>
         </div>
       </div>
-      
+
       <!-- Legend -->
       <div class="heatmap-legend">
          <div class="legend-item"><span class="dot low"></span> Risque Faible</div>
@@ -55,28 +56,30 @@ import { CommonModule } from '@angular/common';
       gap: 20px;
     }
     .student-card {
-      background: white; /* Changed from #f8fafc to white */
-      border: 1px solid #e2e8f0; /* Subtle border */
+      background: #ffffff;
+      border: 1px solid #f1f5f9;
       border-radius: 12px;
       padding: 24px 16px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
     }
-    .student-card:hover { 
-      transform: translateY(-4px); 
+    .student-card:hover {
+      transform: translateY(-4px);
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
-    
+
     .avatar-ring {
       position: relative;
       margin-bottom: 16px;
       padding: 4px;
       border-radius: 50%;
     }
-    
+
     .avatar-circle {
       width: 56px; /* Slightly larger */
       height: 56px;
@@ -90,7 +93,7 @@ import { CommonModule } from '@angular/common';
       font-size: 16px;
       border: 3px solid white;
     }
-    
+
     /* Ring colors */
     .avatar-ring.low { background: #dcfce7; }
     .avatar-ring.medium { background: #fef3c7; }
@@ -111,7 +114,7 @@ import { CommonModule } from '@angular/common';
       font-weight: 700;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    
+
     .risk-badge.low { background: #22c55e; }
     .risk-badge.medium { background: #eab308; } /* Adjusted yellow/orange */
     .risk-badge.high { background: #f97316; }
@@ -124,7 +127,7 @@ import { CommonModule } from '@angular/common';
       text-align: center;
       margin-bottom: 6px;
     }
-    
+
     .risk-label {
       font-size: 12px;
       font-weight: 500;
@@ -148,26 +151,33 @@ import { CommonModule } from '@angular/common';
     .dot.critical { background: #ef4444; }
   `]
 })
-export class RiskHeatmap {
-  students = [
-    { name: 'Omar El Fassi', riskLevel: 'low', riskScore: 12 },
-    { name: 'Nisrine Alami', riskLevel: 'low', riskScore: 18 },
-    { name: 'Salma Bennani', riskLevel: 'low', riskScore: 22 },
-    { name: 'Rim Alaoui', riskLevel: 'medium', riskScore: 45 },
-    { name: 'Amine Tazi', riskLevel: 'medium', riskScore: 48 },
-    { name: 'Youssef Idrissi', riskLevel: 'high', riskScore: 72 },
-    { name: 'Fatima Zahra', riskLevel: 'high', riskScore: 78 },
-    { name: 'Mohamed Chakir', riskLevel: 'critical', riskScore: 88 },
-    { name: 'Anas Moussaoui', riskLevel: 'critical', riskScore: 92 },
-    { name: 'Karim Teral', riskLevel: 'medium', riskScore: 55 },
-  ];
+export class RiskHeatmap implements OnInit {
+  students: any[] = [];
 
-  getInitials(name: string) {
+  constructor(private readonly http: HttpClient) {}
+
+  ngOnInit(): void {
+    this.fetchData();
+  }
+
+  fetchData(): void {
+    this.http.get<any[]>('http://localhost:4000/teacher/risk-heatmap', {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    }).subscribe({
+      next: (data: any[]) => {
+        this.students = data;
+      },
+      error: (err: any) => console.error('Erreur lors du chargement de la carte des risques', err)
+    });
+  }
+
+  getInitials(name: string): string {
+    if (!name) return '';
     return name.split(' ').map(n => n[0]).join('').substring(0, 2);
   }
 
-  getRiskLabel(level: string) {
+  getRiskLabel(level: string): string {
     const labels: any = { low: 'Faible', medium: 'Moyen', high: 'Élevé', critical: 'Critique' };
-    return labels[level];
+    return labels[level] || level;
   }
 }

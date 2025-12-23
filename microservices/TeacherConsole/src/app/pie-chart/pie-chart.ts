@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-pie-chart',
@@ -8,40 +9,26 @@ import { CommonModule } from '@angular/common';
   template: `
     <div class="chart-container">
       <h3 class="chart-title">Distribution des Profils</h3>
-      
+
       <div class="chart-wrapper">
         <svg viewBox="0 0 100 100" class="pie-svg">
            <g transform="rotate(-60 50 50)">
-              <!-- Assidu (Green) 42% -->
-              <circle cx="50" cy="50" r="15.9155" fill="transparent" stroke="#10b981" stroke-width="32"
-                      stroke-dasharray="42 58" stroke-dashoffset="0" class="segment"></circle>
-              
-              <!-- Irrégulier (Purple) 8% -->
-              <circle cx="50" cy="50" r="15.9155" fill="transparent" stroke="#8b5cf6" stroke-width="32"
-                      stroke-dasharray="8 92" stroke-dashoffset="-42" class="segment"></circle>
-              
-              <!-- Procrastinateur (Red) 17% -->
-              <circle cx="50" cy="50" r="15.9155" fill="transparent" stroke="#ef4444" stroke-width="32"
-                      stroke-dasharray="17 83" stroke-dashoffset="-50" class="segment"></circle>
-             
-              <!-- Moyen (Orange) 33% -->
-              <circle cx="50" cy="50" r="15.9155" fill="transparent" stroke="#f59e0b" stroke-width="32"
-                      stroke-dasharray="33 67" stroke-dashoffset="-67" class="segment"></circle>
+              <circle *ngFor="let seg of segments"
+                      cx="50" cy="50" r="15.9155" fill="transparent"
+                      [attr.stroke]="seg.color" stroke-width="32"
+                      [attr.stroke-dasharray]="seg.dashArray"
+                      [attr.stroke-dashoffset]="seg.dashOffset"
+                      class="segment">
+              </circle>
            </g>
-           
-           <!-- Optional inner white circle for donut effect, or keep solid for pie. 
-                User asked for "image 2" style previously which was solid. 
-                Performance chart is lines. 
-                I will keep it solid pie but with the layout of Performance chart. 
-           -->
         </svg>
 
-        <!-- Legend matched to Performance Chart style -->
         <div class="legend">
-           <div class="legend-item"><span class="indicator green"></span>Assidu 42%</div>
-           <div class="legend-item"><span class="indicator purple"></span>Irrégulier 8%</div>
-           <div class="legend-item"><span class="indicator orange"></span>Moyen 33%</div>
-           <div class="legend-item"><span class="indicator red"></span>Procrast. 17%</div>
+           <div *ngFor="let seg of segments" class="legend-item">
+             <span class="indicator" [ngClass]="seg.type"></span>
+             <span class="legend-label">{{ seg.label }}</span>
+             <span class="legend-value">{{ seg.value }}%</span>
+           </div>
         </div>
       </div>
     </div>
@@ -99,26 +86,65 @@ import { CommonModule } from '@angular/common';
       margin-top: auto;
       width: 100%;
     }
-    
-    .legend-item { 
-      display: flex; 
-      align-items: center; 
-      gap: 8px; 
-      font-size: 12px; 
-      color: #64748b; 
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #64748b;
       font-weight: 500;
+      min-width: 120px;
     }
-    
-    .indicator { 
-      width: 8px; 
-      height: 8px; 
-      border-radius: 50%; 
+
+    .legend-label {
+      flex: 1;
     }
-    
-    .indicator.green { background: #10b981; }
-    .indicator.purple { background: #8b5cf6; }
-    .indicator.orange { background: #f59e0b; }
-    .indicator.red { background: #ef4444; }
+
+    .legend-value {
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .indicator.assidu { background: #10b981; }
+    .indicator.irregulier { background: #8b5cf6; }
+    .indicator.moyen { background: #f59e0b; }
+    .indicator.procrastinateur { background: #ef4444; }
   `]
 })
-export class PieChart { }
+export class PieChart implements OnInit {
+  segments: any[] = [];
+
+  constructor(private readonly http: HttpClient) {}
+
+  ngOnInit(): void {
+    this.fetchData();
+  }
+
+  fetchData(): void {
+    this.http.get<any[]>('http://localhost:4000/teacher/profiles-distribution', {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    }).subscribe({
+      next: (data: any[]) => {
+        let currentOffset = 0;
+        this.segments = data.map((item: any) => {
+          const dashArray = `${item.value} ${100 - item.value}`;
+          const dashOffset = -currentOffset;
+          currentOffset += item.value;
+          return {
+            ...item,
+            dashArray,
+            dashOffset
+          };
+        });
+      },
+      error: (err: any) => console.error('Erreur lors du chargement de la distribution des profils', err)
+    });
+  }
+}

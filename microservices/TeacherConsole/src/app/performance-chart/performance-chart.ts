@@ -1,5 +1,6 @@
-import { Component, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, ElementRef, ViewChild, AfterViewInit, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-performance-chart',
@@ -8,7 +9,7 @@ import { CommonModule } from '@angular/common';
   template: `
     <div class="chart-container">
       <h3 class="chart-title">Évolution des Performances</h3>
-      
+
       <div class="chart-wrapper">
         <!-- SVG Layout -->
         <svg class="chart-svg" viewBox="0 0 600 300" preserveAspectRatio="none">
@@ -16,12 +17,12 @@ import { CommonModule } from '@angular/common';
            <g class="grid-y">
              <line *ngFor="let tick of yTicks" x1="40" [attr.y1]="getY(tick)" x2="580" [attr.y2]="getY(tick)" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4"/>
            </g>
-           
+
             <!-- Grid Lines (Vertical) -->
            <g class="grid-x">
-             <line *ngFor="let week of xLabels; let i = index" 
-                   [attr.x1]="getX(i)" y1="20" 
-                   [attr.x2]="getX(i)" y2="250" 
+             <line *ngFor="let week of xLabels; let i = index"
+                   [attr.x1]="getX(i)" y1="20"
+                   [attr.x2]="getX(i)" y2="250"
                    stroke="#f1f5f9" stroke-width="1" stroke-dasharray="2"/>
            </g>
 
@@ -29,40 +30,40 @@ import { CommonModule } from '@angular/common';
            <path [attr.d]="getPath(dataPresence)" fill="none" stroke="#a855f7" stroke-width="2" />
            <path [attr.d]="getPath(dataEngagement)" fill="none" stroke="#10b981" stroke-width="2" />
            <path [attr.d]="getPath(dataMoyenne)" fill="none" stroke="#3b82f6" stroke-width="2" />
-           
+
            <!-- Dots -->
            <!-- Moyenne (Blue) -->
-           <circle *ngFor="let val of dataMoyenne; let i = index" 
+           <circle *ngFor="let val of dataMoyenne; let i = index"
                    [attr.cx]="getX(i)" [attr.cy]="getY(val)" r="4" fill="white" stroke="#3b82f6" stroke-width="2"
                    class="dot" (mouseenter)="showTooltip($event, i, 'Moyenne', val)"/>
-                   
+
            <!-- Engagement (Green) -->
-           <circle *ngFor="let val of dataEngagement; let i = index" 
+           <circle *ngFor="let val of dataEngagement; let i = index"
                    [attr.cx]="getX(i)" [attr.cy]="getY(val)" r="4" fill="white" stroke="#10b981" stroke-width="2"
                    class="dot" (mouseenter)="showTooltip($event, i, 'Engagement', val)"/>
-           
+
            <!-- Presence (Purple) -->
-           <circle *ngFor="let val of dataPresence; let i = index" 
+           <circle *ngFor="let val of dataPresence; let i = index"
                    [attr.cx]="getX(i)" [attr.cy]="getY(val)" r="4" fill="white" stroke="#a855f7" stroke-width="2"
                    class="dot" (mouseenter)="showTooltip($event, i, 'Présence', val)"/>
-           
+
            <!-- Axis Labels -->
            <g class="labels-x">
              <text *ngFor="let week of xLabels; let i = index" [attr.x]="getX(i)" y="270" text-anchor="middle" font-size="11" fill="#64748b">{{ week }}</text>
            </g>
-           
+
            <g class="labels-y">
              <text *ngFor="let tick of yTicks" x="35" [attr.y]="getY(tick) + 4" text-anchor="end" font-size="11" fill="#64748b">{{ tick }}</text>
            </g>
         </svg>
-        
+
         <!-- Legend -->
         <div class="legend">
            <div class="legend-item"><span class="indicator blue"></span>Moyenne</div>
            <div class="legend-item"><span class="indicator green"></span>Engagement</div>
            <div class="legend-item"><span class="indicator purple"></span>Présence</div>
         </div>
-        
+
         <!-- Tooltip -->
         <div class="tooltip" *ngIf="tooltipVisible" [style.left.px]="tooltipX" [style.top.px]="tooltipY">
            <div class="tooltip-header">{{ currentTooltipWeek }}</div>
@@ -125,7 +126,7 @@ import { CommonModule } from '@angular/common';
     .indicator.blue { color: #3b82f6; background: #3b82f6; }
     .indicator.green { color: #10b981; background: #10b981; }
     .indicator.purple { color: #a855f7; background: #a855f7; }
-    
+
     .tooltip {
       position: absolute;
       background: white;
@@ -163,14 +164,14 @@ import { CommonModule } from '@angular/common';
     .dot-sm.purple { background: #a855f7; }
   `]
 })
-export class PerformanceChart {
+export class PerformanceChart implements OnInit {
   yTicks = [0, 25, 50, 75, 100];
-  xLabels = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6', 'Sem 7', 'Sem 8'];
+  xLabels: string[] = [];
 
   // Data matching the visual curves
-  dataMoyenne = [65, 68, 70, 73, 75, 78, 80, 80];
-  dataEngagement = [70, 72, 75, 78, 82, 86, 88, 90];
-  dataPresence = [85, 88, 86, 92, 90, 94, 96, 97];
+  dataMoyenne: number[] = [];
+  dataEngagement: number[] = [];
+  dataPresence: number[] = [];
 
   tooltipVisible = false;
   tooltipX = 0;
@@ -178,27 +179,47 @@ export class PerformanceChart {
   currentTooltipWeek = '';
   currentValues = { moyenne: 0, engagement: 0, presence: 0 };
 
-  getX(index: number) {
+  constructor(private readonly http: HttpClient) {}
+
+  ngOnInit(): void {
+    this.fetchData();
+  }
+
+  fetchData(): void {
+    this.http.get<any>('http://localhost:4000/teacher/performance-data', {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    }).subscribe({
+      next: (data: any) => {
+        this.xLabels = data.labels;
+        this.dataMoyenne = data.moyenne;
+        this.dataEngagement = data.engagement;
+        this.dataPresence = data.presence;
+      },
+      error: (err: any) => console.error('Erreur lors du chargement des données de performance', err)
+    });
+  }
+
+  getX(index: number): number {
     // 8 points spread across roughly 540 width (40 to 580)
     const step = 540 / (this.xLabels.length - 1);
     return 40 + (index * step);
   }
 
-  getY(value: number) {
+  getY(value: number): number {
     // Map 0-100 to 250-20
     // range starts at 250 (which is 0)
     // height is 230
     return 250 - (value / 100 * 230);
   }
 
-  getPath(data: number[]) {
-    return data.map((val, i) => {
+  getPath(data: number[]): string {
+    return data.map((val: number, i: number) => {
       const type = i === 0 ? 'M' : 'L';
       return `${type} ${this.getX(i)} ${this.getY(val)}`;
     }).join(' ');
   }
 
-  showTooltip(event: MouseEvent, index: number, series: string, value: number) {
+  showTooltip(event: MouseEvent, index: number, series: string, value: number): void {
     this.tooltipVisible = true;
     // Position tooltip near the point relative to container
     // This is rough estimation, angular binding handles updates
