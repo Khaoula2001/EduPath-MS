@@ -319,7 +319,21 @@ services:
       timeout: 5s
       retries: 5
 
+  minio:
+    image: minio/minio
+    container_name: minio_server
+    ports:
+      - "9999:9000"    # Changed from 9000
+      - "9998:9001"    # Changed from 9001
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadminpassword
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
 # Ajoutez à la fin du fichier :
 volumes:
     postgres_data:
+    minio_data:
 
