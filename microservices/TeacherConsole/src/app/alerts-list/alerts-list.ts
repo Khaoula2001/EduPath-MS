@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-alerts-list',
@@ -8,39 +9,30 @@ import { CommonModule } from '@angular/common';
   templateUrl: './alerts-list.html',
   styleUrls: ['./alerts-list.css']
 })
-export class AlertsList {
-  alerts = [
-    {
-      message: 'Anas Moussaoui n\'a pas été actif depuis 5 jours',
-      date: '2025-12-08',
-      read: false,
-      type: 'critical'
-    },
-    {
-      message: 'Fatima Zahra a raté 3 devoirs consécutifs',
-      date: '2025-12-07',
-      read: false,
-      type: 'critical'
-    },
-    {
-      message: 'Mohamed Amine montre des signes de désengagement',
-      date: '2025-12-07',
-      read: false,
-      type: 'warning'
-    },
-    {
-      message: 'Yassine Tahiri a un taux de complétion des exercices de 40%',
-      date: '2025-12-06',
-      read: false,
-      type: 'warning'
-    },
-    {
-      message: '8 étudiants n\'ont pas consulté le dernier cours',
-      date: '2025-12-06',
-      read: false,
-      type: 'info'
-    }
-  ];
+export class AlertsList implements OnInit {
+  alerts: any[] = [];
+
+  constructor(private http: HttpClient) {}
+
+  ngOnInit() {
+    this.fetchAlerts();
+  }
+
+  fetchAlerts() {
+    this.http.get<any[]>('http://localhost:4000/teacher/alerts', {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    }).subscribe({
+      next: (data) => {
+        this.alerts = data.map(a => ({
+          message: `${a.student_name}: ${a.message}`,
+          date: a.date,
+          read: false,
+          type: a.priority.toLowerCase() === 'urgent' ? 'critical' : 'warning'
+        }));
+      },
+      error: (err) => console.error('Erreur lors du chargement des alertes', err)
+    });
+  }
 
   toggleRead(alert: any) {
     alert.read = !alert.read;

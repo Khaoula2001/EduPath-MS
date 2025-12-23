@@ -30,7 +30,9 @@ services:
       POSTGRES_DB: analytics
     volumes:
       - postgres_data:/var/lib/postgresql/data  # Changement important ici
-      - ./microservices/prepa-data/sql:/docker-entrypoint-initdb.d:ro
+      - ./sql/init-multiple-databases.sql:/docker-entrypoint-initdb.d/00-init-databases.sql:ro
+      - ./microservices/prepa-data/sql:/docker-entrypoint-initdb.d/01-prepadata:ro
+      - ./microservices/lms-connector/sql:/docker-entrypoint-initdb.d/02-lms:ro
     ports:
       - "5432:5432"
     restart: unless-stopped  # Ajoutez cette ligne
@@ -53,7 +55,7 @@ services:
       - postgres
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/analytics
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/prepadata_db
       AIRFLOW__CORE__LOAD_EXAMPLES: "False"
       AIRFLOW__CORE__FERNET_KEY: "81HqDtbqAywKSOumSha3BhWNOdQ26slT6K0YaZeZyPs="
     volumes:
@@ -63,8 +65,12 @@ services:
       - ./microservices/prepa-data/config:/opt/prepadata/config
     command: >
       bash -c "
+      echo '=== UPGRADE PIP ===' &&
+      pip install --upgrade pip &&
+      echo '=== INSTALL DEPENDENCIES ===' &&
+      pip install --default-timeout=1000 --retries=10 --no-cache-dir scikit-learn==1.3.0 pandas numpy &&
       echo '=== ATTENTE POSTGRESQL ===' &&
-      until PGPASSWORD=prepadata_pwd psql -h postgres -U prepadata -d analytics -c 'SELECT 1' >/dev/null 2>&1; do
+      until PGPASSWORD=prepadata_pwd psql -h postgres -U prepadata -d prepadata_db -c 'SELECT 1' >/dev/null 2>&1; do
         echo 'En attente de PostgreSQL...';
         sleep 2;
       done &&
@@ -73,13 +79,7 @@ services:
       echo '=== UPGRADE DB ===' &&
       airflow db upgrade &&
       echo '=== CREATION UTILISATEUR ===' &&
-      airflow users create \
-        --username admin \
-        --password admin \
-        --firstname Admin \
-        --lastname User \
-        --role Admin \
-        --email admin@example.com || echo 'Utilisateur existe déjà'
+      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || echo 'Utilisateur existe déjà'
       "
 
   airflow-webserver:
@@ -91,7 +91,7 @@ services:
       - airflow-init
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/analytics
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/prepadata_db
       AIRFLOW__CORE__LOAD_EXAMPLES: "False"
       AIRFLOW__CORE__FERNET_KEY: "81HqDtbqAywKSOumSha3BhWNOdQ26slT6K0YaZeZyPs="
       AIRFLOW__WEBSERVER__SECRET_KEY: "46e8d8c7a3f2b1d9e5c4a6f8b2d7e9c1a3f5b8d2e7c9a4f6b1d8e3c7a9f2b5d4"
@@ -122,7 +122,7 @@ services:
       - airflow-webserver
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/analytics
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/prepadata_db
       AIRFLOW__CORE__LOAD_EXAMPLES: "False"
       AIRFLOW__CORE__FERNET_KEY: "81HqDtbqAywKSOumSha3BhWNOdQ26slT6K0YaZeZyPs="
       AIRFLOW__WEBSERVER__SECRET_KEY: "46e8d8c7a3f2b1d9e5c4a6f8b2d7e9c1a3f5b8d2e7c9a4f6b1d8e3c7a9f2b5d4"
@@ -151,20 +151,23 @@ services:
     environment:
       PG_HOST: postgres
       PG_PORT: 5432
-      PG_DB: analytics
+      PG_DB: prepadata_db
       PG_USER: prepadata
       PG_PASSWORD: prepadata_pwd
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/prepadata_db
     volumes:
       - ./microservices/prepa-data/src:/opt/prepadata/src
       - ./microservices/prepa-data/data:/opt/prepadata/data
       - ./microservices/prepa-data/config:/opt/prepadata/config
       - ./microservices/prepa-data/requirements.txt:/opt/prepadata/requirements.txt
+    ports:
+      - "8001:8001"
     command: >
       bash -c "
       pip install --upgrade pip &&
-      pip install --default-timeout=1000 --retries=10 --no-cache-dir pandas numpy scikit-learn sqlalchemy psycopg2-binary &&
+      pip install --default-timeout=1000 --retries=10 --no-cache-dir pandas numpy scikit-learn sqlalchemy psycopg2-binary fastapi uvicorn apache-airflow &&
       echo 'PrepData Microservice ready!' &&
-      tail -f /dev/null
+      python /opt/prepadata/src/api.py
       "
 
   lms-connector:
@@ -178,7 +181,7 @@ services:
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: analytics
+      DB_NAME: lms_db
       DB_USER: prepadata
       DB_PASSWORD: prepadata_pwd
     ports:
@@ -195,7 +198,7 @@ services:
     environment:
       PG_HOST: postgres
       PG_PORT: 5432
-      PG_DB: analytics
+      PG_DB: profiler_db
       PG_USER: prepadata
       PG_PASSWORD: prepadata_pwd
     volumes:
@@ -214,7 +217,7 @@ services:
     environment:
       PG_HOST: postgres
       PG_PORT: 5432
-      PG_DB: analytics
+      PG_DB: predictor_db
       PG_USER: prepadata
       PG_PASSWORD: prepadata_pwd
       MLFLOW_TRACKING_URI: http://mlflow:5000
@@ -224,7 +227,6 @@ services:
   reco-builder:
     build:
       context: ./microservices/recco-builder
-      dockerfile: Dockerfile
     container_name: reco_builder_service
     depends_on:
       postgres:
@@ -232,7 +234,7 @@ services:
     environment:
       PG_HOST: postgres
       PG_PORT: 5432
-      PG_DB: analytics
+      PG_DB: reco_db
       PG_USER: prepadata
       PG_PASSWORD: prepadata_pwd
     ports:
@@ -249,7 +251,7 @@ services:
     environment:
       PG_HOST: postgres
       PG_PORT: 5432
-      PG_DB: analytics
+      PG_DB: teacher_db
       PG_USER: prepadata
       PG_PASSWORD: prepadata_pwd
     ports:
@@ -266,7 +268,7 @@ services:
     environment:
       PG_HOST: postgres
       PG_PORT: 5432
-      PG_DB: analytics
+      PG_DB: student_db
       PG_USER: prepadata
       PG_PASSWORD: prepadata_pwd
     ports:
