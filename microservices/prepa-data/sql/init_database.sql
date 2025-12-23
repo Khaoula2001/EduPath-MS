@@ -5,6 +5,8 @@
 -- Location: microservices/prepa-data/sql/01_init_database.sql
 -- =====================================================
 
+\c prepadata_db;
+
 -- Create extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";

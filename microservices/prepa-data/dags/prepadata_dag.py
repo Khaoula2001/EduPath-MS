@@ -100,10 +100,10 @@ def create_schemas_task(**kwargs):
 
 
 # ==========================================
-# Task 1: Extract (CSV → PostgreSQL)
+# Task 1: Extract (PostgreSQL raw_learning_data → staging)
 # ==========================================
 def extract_task(**kwargs):
-    """Extract OULAD CSV files and load to PostgreSQL raw_data schema"""
+    """Extract data from PostgreSQL raw_learning_data schema"""
     print("=" * 60)
     print("TASK 1: EXTRACTION")
     print("=" * 60)
@@ -113,6 +113,25 @@ def extract_task(**kwargs):
         pg_config=PG_CONFIG
     )
 
+    # Config spécifique pour la source LMS (lms_db)
+    SOURCE_PG_CONFIG = PG_CONFIG.copy()
+    SOURCE_PG_CONFIG['dbname'] = os.getenv('SOURCE_DB', 'lms_db')
+
+    # 1. On tente d'extraire depuis PostgreSQL (données venant du LMS Connector)
+    try:
+        from extractors.extractor import load_source
+        data = load_source(source='MOODLE', pg_cfg=SOURCE_PG_CONFIG)
+        
+        if not all(df.empty for df in data.values()):
+            print("✅ Data successfully extracted from PostgreSQL (MOODLE)")
+            extractor.save_to_raw_data(data)
+            print("\n✅ Extraction from DB complete")
+            return
+    except Exception as e:
+        print(f"⚠️ Could not load from PostgreSQL: {e}")
+
+    # 2. Fallback vers les CSV OULAD si pas de données en base
+    print("⚠️ No data found in PostgreSQL, falling back to CSV (OULAD)...")
     result = extractor.extract_and_load()
     extractor.close()
 
