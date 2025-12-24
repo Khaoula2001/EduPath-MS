@@ -20,6 +20,29 @@ Le projet adopte une architecture microservices sécurisée et orientée événe
 
 ---
 
+## Structure du Projet
+
+```
+EduPath-MS/
+├── microservices/
+│   ├── api-gateway/          # Point d'entrée unique (Node.js)
+│   ├── lms-connector/        # Connecteur Moodle (Node.js)
+│   ├── prepa-data/           # Pipeline ETL & Airflow (Python)
+│   ├── student-profiler/     # Clustering des étudiants (FastAPI)
+│   ├── path-predictor/       # Prédiction de réussite (FastAPI)
+│   ├── recco-builder/        # Moteur de recommandation (FastAPI)
+│   ├── teacher-console-api/  # Backend Dashboard Enseignant (FastAPI)
+│   ├── student-coach-api/    # Backend App Étudiant (FastAPI)
+│   ├── TeacherConsole/       # Frontend Enseignant (Angular)
+│   └── student_coach/        # App Mobile Étudiant (Flutter)
+├── sql/                      # Scripts d'initialisation des bases de données
+├── docker-compose.yml        # Orchestration des conteneurs
+├── Jenkinsfile               # Pipeline CI/CD
+└── README.md                 # Documentation du projet
+```
+
+---
+
 ## Composants & Microservices
 
 Tous les services sont centralisés derrière l'**API Gateway** (Port `4000`).
