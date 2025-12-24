@@ -9,3 +9,4 @@ numpy
 sqlalchemy
 psycopg2-binary
 python-dotenv
+sentence-transformers

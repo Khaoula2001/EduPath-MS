@@ -2,6 +2,7 @@ from fastapi import FastAPI, BackgroundTasks
 import subprocess
 import os
 import logging
+import uvicorn
 
 app = FastAPI(title="PrepData API", description="API for controlling PrepData ETL tasks")
 
@@ -14,6 +15,20 @@ DAGS_PATH = os.getenv("AIRFLOW_DAGS_PATH", "/opt/airflow/dags")
 @app.get("/health")
 def health():
     return {"status": "UP", "service": "PrepData API"}
+
+@app.get("/features")
+def get_features(student_id: int):
+    """
+    Mock endpoint to return features for a student.
+    In a real scenario, this would query the analytics database.
+    """
+    # Mock data
+    return {
+        "student_id": student_id,
+        "total_clicks": 150,
+        "active_days": 25,
+        "last_active": "2023-10-27"
+    }
 
 @app.post("/run-etl")
 async def run_etl(background_tasks: BackgroundTasks):
@@ -46,5 +61,4 @@ def trigger_airflow_dag():
         logger.error(f"Error triggering DAG: {e}")
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
