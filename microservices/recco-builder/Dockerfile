@@ -8,9 +8,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Upgrade pip
-RUN pip install --upgrade pip
+RUN pip install --no-cache-dir --upgrade pip
 
-# Copy requirements and install
+# Install PyTorch CPU first (Much faster and lighter than the default GPU version)
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+
+# Copy requirements and install the rest
 COPY requirements.txt .
 RUN pip install --default-timeout=1000 --retries=10 --no-cache-dir -r requirements.txt
 
@@ -23,4 +26,4 @@ COPY . .
 EXPOSE 8003
 
 # Command to run the application
-CMD ["python", "app.py"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8003"]

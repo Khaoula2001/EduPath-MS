@@ -334,7 +334,6 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
 
-# Ajoutez à la fin du fichier :
 volumes:
     postgres_data:
     minio_data:
