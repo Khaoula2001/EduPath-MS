@@ -115,3 +115,4 @@ Access to microservices is protected by **JWT** via the Gateway:
 
 -   **Teacher Dashboard**: Powerful Web interface developed in Angular.
 -   **Student App**: Native mobile experience via Flutter.
+

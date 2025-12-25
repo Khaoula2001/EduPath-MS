@@ -4,6 +4,7 @@ services:
   # ==========================================
   # PostgreSQL Database - ULTRA LÉGER
   # ==========================================
+
 #  postgres:
 #    image: postgres:15-alpine
 ##    environment:
@@ -27,21 +28,22 @@ services:
       POSTGRES_PASSWORD: prepadata_pwd
       POSTGRES_DB: analytics
     volumes:
+
+
       - postgres_data:/var/lib/postgresql/data  # Changement important ici
       - ./sql/init-multiple-databases.sql:/docker-entrypoint-initdb.d/00-init-databases.sql:ro
       - ./microservices/prepa-data/sql:/docker-entrypoint-initdb.d/01-prepadata:ro
       - ./microservices/lms-connector/sql:/docker-entrypoint-initdb.d/02-lms:ro
+
     ports:
       - "5432:5432"
-    restart: unless-stopped  # Ajoutez cette ligne
+    restart: unless-stopped # Ajoutez cette ligne
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U prepadata -d analytics" ]
-      interval: 10s  # Augmentez l'intervalle
+      interval: 10s # Augmentez l'intervalle
       timeout: 10s
       retries: 10
       start_period: 30s
-
-
 
   # ==========================================
   # Apache Airflow - VERSION OFFICIELLE
@@ -61,6 +63,8 @@ services:
       - ./microservices/prepa-data/data:/opt/prepadata/data
       - ./microservices/prepa-data/config:/opt/prepadata/config
     command: >
+
+
       bash -c "
       echo '=== UPGRADE PIP ===' &&
       pip install --upgrade pip &&
@@ -81,6 +85,7 @@ services:
 
   airflow-webserver:
     image: apache/airflow:2.7.3  # Version plus récente avec Python 3.8+
+
     restart: unless-stopped
     depends_on:
       - postgres
@@ -100,6 +105,8 @@ services:
     ports:
       - "8081:8080"
     command: >
+
+
       bash -c "
       echo '=== UPGRADE PIP ===' &&
       pip install --upgrade pip &&
@@ -112,6 +119,7 @@ services:
 
   airflow-scheduler:
     image: apache/airflow:2.7.3  # Version plus récente avec Python 3.8+
+
     restart: unless-stopped
     depends_on:
       - airflow-webserver
@@ -127,6 +135,7 @@ services:
       - ./microservices/prepa-data/data:/opt/prepadata/data
       - ./microservices/prepa-data/config:/opt/prepadata/config
     command: >
+
       bash -c "
       echo '=== UPGRADE PIP ===' &&
       pip install --upgrade pip &&
@@ -136,6 +145,7 @@ services:
       echo '=== DEMARRAGE SCHEDULER ===' &&
       airflow scheduler
       "
+
 
   prepadata:
     build:
@@ -152,26 +162,86 @@ services:
       PG_PASSWORD: prepadata_pwd
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/prepadata_db
     volumes:
-      - ./microservices/prepa-data/src:/app/src
-      - ./microservices/prepa-data/data:/app/data
-      - ./microservices/prepa-data/config:/app/config
+
+      - ./microservices/prepa-data/src:/opt/prepadata/src
+      - ./microservices/prepa-data/data:/opt/prepadata/data
+      - ./microservices/prepa-data/config:/opt/prepadata/config
+      - ./microservices/prepa-data/requirements.txt:/opt/prepadata/requirements.txt
+    command: >
+      bash -c " pip install --upgrade pip && pip install --default-timeout=1000 --retries=10 --no-cache-dir pandas numpy scikit-learn sqlalchemy psycopg2-binary && echo 'PrepData Microservice ready!' && tail -f /dev/null "
+
+  # ==========================================
+  # MOODLE & LMS CONNECTOR (Merged)
+  # ==========================================
+  moodleapp:
+    build:
+      context: ./microservices/lms-connector/moodle-docker/moodle-docker
+    image: moodleapp:1.0
+    container_name: moodleapp
     ports:
-      - "8001:8001"
+      - "80:80"
+    volumes:
+      - moodledata:/var/www/moodledata
+    depends_on:
+      - moodledb
+
+  moodledb:
+    image: mysql:8.4.5
+    container_name: clouddb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-moodle}
+      MYSQL_USER: ${MYSQL_USER:-moodle}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-moodle}
+    volumes:
+      - clouddbdata:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    ports:
+      - "8082:80" # Changed to 8082 to avoid conflict with airflow-webserver
+    environment:
+      PMA_HOST: clouddb
+      PMA_PORT: 3306
+      PMA_USER: ${MYSQL_USER:-moodle}
+      PMA_PASSWORD: ${MYSQL_PASSWORD:-moodle}
+    depends_on:
+      - moodledb
+
+  lmsdb:
+    image: postgres:15
+    container_name: lmsdb_connector
+    restart: always
+    environment:
+      POSTGRES_DB: lmsconnector
+      POSTGRES_USER: lms
+      POSTGRES_PASSWORD: lmspass
+    volumes:
+      - lmsdbdata:/var/lib/postgresql/data
+      - ./microservices/lms-connector/moodle-docker/moodle-docker/LMSConnector/sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5433:5432"
 
   lms-connector:
     build:
-      context: ./microservices/lms-connector
-      dockerfile: Dockerfile
-    image: edupath/lms-connector:latest
+      context: ./microservices/lms-connector/moodle-docker/moodle-docker/LMSConnector
+    container_name: lms_connector_service
+
     depends_on:
-      postgres:
-        condition: service_healthy
+      - moodleapp
+      - lmsdb
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: lms_db
-      DB_USER: prepadata
-      DB_PASSWORD: prepadata_pwd
+
+      MOODLE_API_URL: http://moodleapp/webservice/rest/server.php
+      MOODLE_TOKEN: 340fe84eeed17856a8bad6c59d2c87ed
+      DB_HOST: lmsdb
+      DB_NAME: lmsconnector
+      DB_USER: lms
+      DB_PASSWORD: lmspass
+
     ports:
       - "3001:3000"
 
@@ -295,13 +365,13 @@ services:
   rabbitmq:
     image: rabbitmq:3.11-management-alpine
     ports:
-      - "5672:5672"  # Port for AMQP (messaging)
+      - "5672:5672" # Port for AMQP (messaging)
       - "15672:15672" # Port for web management UI
     environment:
       RABBITMQ_DEFAULT_USER: edupath
       RABBITMQ_DEFAULT_PASS: edupath
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -309,8 +379,8 @@ services:
   minio:
     image: minio/minio
     ports:
-      - "9999:9000"    # Changed from 9000
-      - "9998:9001"    # Changed from 9001
+      - "9999:9000" # Changed from 9000
+      - "9998:9001" # Changed from 9001
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadminpassword
@@ -319,5 +389,9 @@ services:
     command: server /data --console-address ":9001"
 
 volumes:
-    postgres_data:
-    minio_data:
+  postgres_data:
+  minio_data:
+  clouddbdata:
+  moodledata:
+  lmsdbdata:
+
