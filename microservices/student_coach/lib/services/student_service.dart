@@ -5,7 +5,8 @@ class StudentService {
   final ApiService _apiService = ApiService();
 
   Future<StudentProfile> getMyProfile(String studentId) async {
-    final data = await _apiService.get('/profiler/profiles/$studentId');
+    // Le microservice utilise /profile/{id} au singulier
+    final data = await _apiService.get('/profiler/profile/$studentId');
     return StudentProfile.fromJson(data);
   }
 

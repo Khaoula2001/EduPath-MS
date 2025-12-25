@@ -26,6 +26,7 @@ RUN mkdir -p /var/www/moodledata && \
 RUN echo "* * * * * www-data php /var/www/html/admin/cli/cron.php > /dev/null 2>&1"     > /etc/cron.d/moodle-cron && chmod 0644 /etc/cron.d/moodle-cron
 
 COPY entrypoint.sh /entrypoint.sh
+RUN sed -i 's/\r$//' /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 WORKDIR /var/www/html
