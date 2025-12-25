@@ -143,7 +143,8 @@ services:
       "
 
   prepadata:
-    image: python:3.10-slim
+    build:
+      context: ./microservices/prepa-data
     container_name: prepadata_service
     depends_on:
       postgres:
@@ -156,19 +157,11 @@ services:
       PG_PASSWORD: prepadata_pwd
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/prepadata_db
     volumes:
-      - ./microservices/prepa-data/src:/opt/prepadata/src
-      - ./microservices/prepa-data/data:/opt/prepadata/data
-      - ./microservices/prepa-data/config:/opt/prepadata/config
-      - ./microservices/prepa-data/requirements.txt:/opt/prepadata/requirements.txt
+      - ./microservices/prepa-data/src:/app/src
+      - ./microservices/prepa-data/data:/app/data
+      - ./microservices/prepa-data/config:/app/config
     ports:
       - "8001:8001"
-    command: >
-      bash -c "
-      pip install --upgrade pip &&
-      pip install --default-timeout=1000 --retries=10 --no-cache-dir pandas numpy scikit-learn>=1.6.1 sqlalchemy psycopg2-binary fastapi uvicorn apache-airflow &&
-      echo 'PrepData Microservice ready!' &&
-      python /opt/prepadata/src/api.py
-      "
 
   lms-connector:
     build:
