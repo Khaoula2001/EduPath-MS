@@ -1,105 +1,62 @@
 const express = require('express');
-const { createProxyMiddleware } = require('http-proxy-middleware');
 const cors = require('cors');
-const morgan = require('morgan');
 const jwt = require('jsonwebtoken');
+const { createProxyMiddleware } = require('http-proxy-middleware');
+const morgan = require('morgan');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-const JWT_SECRET = process.env.JWT_SECRET || 'edupath_secret_key';
+const SECRET_KEY = process.env.JWT_SECRET || 'supersecretkey';
 
 // Middleware
 app.use(cors());
-app.use(morgan('dev')); // Logging des requêtes
 app.use(express.json());
+app.use(morgan('dev'));
 
-// --- AUTHENTICATION MIDDLEWARE ---
-const authenticateToken = (req, res, next) => {
-  // Optionnel : On peut désactiver l'auth avec une variable d'env pour le dev
-  if (process.env.DISABLE_AUTH === 'true') {
-    return next();
-  }
-
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) return res.status(401).json({ error: 'Access Token Required' });
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: 'Invalid or Expired Token' });
-    req.user = user;
-    next();
-  });
-};
-
-// --- ROUTES PUBLIQUES ---
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'UP',
-    gateway: 'API Gateway',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Endpoint pour obtenir un token (Login)
-app.post('/login', (req, res) => {
+// Login Route (REST)
+app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
+  console.log(`[Auth] Login attempt: ${username}`);
 
-  // Simulation de validation (à connecter à une DB plus tard)
-  if (username && password) {
-    const user = { name: username, role: username === 'admin' ? 'admin' : 'teacher' };
-    const accessToken = jwt.sign(user, JWT_SECRET, { expiresIn: '24h' });
-    return res.json({ accessToken, user });
+  // TODO: Add real validation against DB or Auth Service
+  if (username) {
+    const userPayload = {
+      id: 1,
+      name: username,
+      role: 'student'
+    };
+    const accessToken = jwt.sign(userPayload, SECRET_KEY, { expiresIn: '24h' });
+
+    res.json({
+      success: true,
+      user: userPayload,
+      accessToken,
+    });
+  } else {
+    res.status(401).json({ success: false, message: 'Identifiants invalides' });
   }
-
-  res.status(400).json({ error: 'Username and password required' });
 });
 
-// --- SERVICES ROUTES (PROXIES) ---
-const routes = {
-  '/api/lms': 'http://lms-connector:3000',
-  '/api/profiler': 'http://student-profiler:8000',
-  '/api/predictor': 'http://path-predictor:8002',
-  '/api/recommendations': 'http://reco-builder:8003',
-  '/api/teacher': 'http://teacher-console-api:8004',
-  '/api/student': 'http://student-coach-api:8005',
-  '/api/prepadata': 'http://prepadata:8001'
-};
+// Health Check
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', service: 'API Gateway' });
+});
 
-// Configuration du Proxy
-const proxyOptions = {
+// Proxy to Student Coach API (Python)
+app.use('/api', createProxyMiddleware({
+  target: 'http://localhost:8005', // Helper microservice
   changeOrigin: true,
-  pathRewrite: (path, req) => {
-    // Supprime le préfixe /api/xxx pour envoyer au microservice
-    return path.replace(/^\/api\/[^\/]+/, '');
+  pathRewrite: {
+    '^/api': '', // Strip /api prefix when forwarding
   },
   onError: (err, req, res) => {
     console.error('Proxy Error:', err);
-    res.status(502).json({ error: 'Service Unavailable', details: err.message });
+    res.status(500).json({ message: 'Service unavailable' });
   }
-};
-
-// Montage des routes
-for (const [path, target] of Object.entries(routes)) {
-  // Pour le moment en dev, on ne protège pas les routes pour aider Omar et Nisrine
-  // On pourra réactiver authenticateToken plus tard
-  app.use(path, createProxyMiddleware({ ...proxyOptions, target }));
-}
-
-// Error handling pour les routes non trouvées
-app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found in API Gateway' });
-});
+}));
 
 app.listen(PORT, () => {
-  console.log(`
-  ╔════════════════════════════════════════════════════════╗
-  ║                                                        ║
-  ║   🚀  EDUPATH-MS API GATEWAY                           ║
-  ║   📡  Listening on port: ${PORT}                        ║
-  ║   🔗  URL: http://localhost:${PORT}                      ║
-  ║                                                        ║
-  ╚════════════════════════════════════════════════════════╝
-  `);
+  console.log(`API Gateway running on http://localhost:${PORT}`);
+  console.log(`Gateway accepting requests at http://localhost:${PORT}/api`);
 });

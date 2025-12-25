@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
+import 'login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
+
+  void _handleLogout(BuildContext context) {
+    AuthService().logout();
+    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,13 +24,14 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 32),
           _buildStatsGrid(),
           const SizedBox(height: 32),
-          _buildMenuSection(),
+          _buildMenuSection(context),
         ],
       ),
     );
   }
 
   Widget _buildProfileHeader() {
+    final user = AuthService.currentUser;
     return Column(
       children: [
         Container(
@@ -41,10 +52,10 @@ class ProfileScreen extends StatelessWidget {
               ),
             ],
           ),
-          child: const Center(
+          child: Center(
             child: Text(
-              'AD',
-              style: TextStyle(
+              user?.username.substring(0, 2).toUpperCase() ?? 'AD',
+              style: const TextStyle(
                 fontSize: 32,
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -53,9 +64,9 @@ class ProfileScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        const Text(
-          'Alex Doe',
-          style: TextStyle(
+        Text(
+          user?.username ?? 'Alex Doe',
+          style: const TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Color(0xFF1A1C24),
@@ -68,9 +79,9 @@ class ProfileScreen extends StatelessWidget {
             color: const Color(0xFF8B80F8).withOpacity(0.1),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Text(
-            'Type: Regular Learner',
-            style: TextStyle(
+          child: Text(
+            'Rôle: ${user?.role ?? 'Étudiant'}',
+            style: const TextStyle(
               color: Color(0xFF8B80F8),
               fontWeight: FontWeight.w600,
               fontSize: 12,
@@ -171,7 +182,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuSection() {
+  Widget _buildMenuSection(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -183,11 +194,13 @@ class ProfileScreen extends StatelessWidget {
           _buildMenuItem(
             icon: Icons.settings_outlined,
             title: 'Account Settings',
+            onTap: () {},
           ),
           const Divider(height: 1),
           _buildMenuItem(
             icon: Icons.notifications_none,
             title: 'Notifications',
+            onTap: () {},
           ),
           const Divider(height: 1),
           _buildMenuItem(
@@ -195,6 +208,7 @@ class ProfileScreen extends StatelessWidget {
             title: 'Logout',
             textColor: Colors.red,
             iconColor: Colors.red,
+            onTap: () => _handleLogout(context),
           ),
         ],
       ),
@@ -204,6 +218,7 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildMenuItem({
     required IconData icon,
     required String title,
+    required VoidCallback onTap,
     Color? textColor,
     Color? iconColor,
   }) {
@@ -225,8 +240,9 @@ class ProfileScreen extends StatelessWidget {
         ),
       ),
       trailing: const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
-      onTap: () {},
+      onTap: onTap,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     );
   }
 }
+

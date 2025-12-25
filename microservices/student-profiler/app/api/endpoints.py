@@ -25,7 +25,7 @@ def predict_clusters(features: StudentFeatures, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Internal Server Error during prediction.")
 
 @router.get("/profile/{student_id}")
-def get_student_profile(student_id: int, db: Session = Depends(get_db)):
+def get_student_profile(student_id: str, db: Session = Depends(get_db)):
     """
     Retrieves the profile for a specific student.
     """
