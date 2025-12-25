@@ -6,7 +6,6 @@ pipeline {
 
     environment {
         DOCKER_REGISTRY = 'edupath'
-        BUILD_NUMBER = "${env.BUILD_NUMBER}"
     }
 
     stages {
@@ -16,52 +15,7 @@ pipeline {
             }
         }
 
-        stage('Build & Install Dependencies') {
-            parallel {
-                stage('Node.js services') {
-                    steps {
-                        dir('microservices/api-gateway') {
-                            bat 'npm install'
-                        }
-                        dir('microservices/lms-connector') {
-                            bat 'npm install'
-                        }
-                    }
-                }
-                stage('Python services') {
-                    steps {
-                        script {
-                            def pythonServices = [
-                                'microservices/student-profiler',
-                                'microservices/student-coach-api',
-                                'microservices/path-predictor',
-                                'microservices/prepa-data',
-                                'microservices/recco-builder',
-                                'microservices/teacher-console-api'
-                            ]
-                            pythonServices.each { service ->
-                                dir(service) {
-                                    echo "Installing dependencies for ${service}"
-                                    // bat 'python -m venv venv && . venv/bin/activate && pip install -r requirements.txt'
-                                    // Alternative if venv is not desired in workspace:
-                                    bat 'pip install -r requirements.txt'
-                                }
-                            }
-                        }
-                    }
-                }
-                stage('Angular Frontend') {
-                    steps {
-                        dir('microservices/TeacherConsole') {
-                            bat 'npm install'
-                            bat 'npm run build'
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Dockerize') {
+        stage('Build & Tag Docker Images') {
             steps {
                 script {
                     def services = [
@@ -72,13 +26,22 @@ pipeline {
                         'path-predictor': 'microservices/path-predictor',
                         'prepa-data': 'microservices/prepa-data',
                         'recco-builder': 'microservices/recco-builder',
-                        'teacher-console-api': 'microservices/teacher-console-api'
+                        'teacher-console-api': 'microservices/teacher-console-api',
+                        'teacher-console': 'microservices/TeacherConsole'
                     ]
 
+                    def stages = [:]
+
                     services.each { name, path ->
-                        echo "Building Docker image for ${name}"
-                        bat "docker build -t ${DOCKER_REGISTRY}/${name}:${BUILD_NUMBER} -t ${DOCKER_REGISTRY}/${name}:latest ${path}"
+                        stages["Build ${name}"] = {
+                            dir(path) {
+                                echo "Building Docker image for ${name}"
+                                bat "docker build -t ${DOCKER_REGISTRY}/${name}:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/${name}:latest ."
+                            }
+                        }
                     }
+
+                    parallel stages
                 }
             }
         }
