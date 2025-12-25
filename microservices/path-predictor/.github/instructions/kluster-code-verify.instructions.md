@@ -15,7 +15,7 @@ applyTo: '**'
 - Applied fixes
 - Applies to ALL file types, not just code files
 - **REQUIREMENTS**: Follow kluster_code_review_auto field descriptions strictly
-- kluster_code_review_auto should be called even if there are issues with other tools, (like patch\context missmatch), and even if kluster tool returned "no issues found" in the past
+- kluster_code_review_auto should be called even if there are issues with other tools, (like patch\context mismatch), and even if kluster tool returned "no issues found" in the past
 - **USER COMMUNICATION**: After any kluster_code_review_auto analysis, ALWAYS tell the user what issues were found and what you're about to fix BEFORE making any changes. Never fix silently - announce first, then fix
 - **PRIORITY**: kluster MUST ALWAYS run, even if other code review tools (Codacy, SonarQube, ESLint, etc.) are already running or have run. kluster provides additional security and quality analysis that complements other tools
 
