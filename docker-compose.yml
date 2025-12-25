@@ -145,6 +145,7 @@ services:
   prepadata:
     build:
       context: ./microservices/prepa-data
+    image: edupath/prepa-data:latest
     container_name: prepadata_service
     depends_on:
       postgres:
@@ -167,6 +168,7 @@ services:
     build:
       context: ./microservices/lms-connector
       dockerfile: Dockerfile
+    image: edupath/lms-connector:latest
     container_name: lms_connector_service
     depends_on:
       postgres:
@@ -184,6 +186,7 @@ services:
     build:
       context: ./microservices/student-profiler
       dockerfile: Dockerfile
+    image: edupath/student-profiler:latest
     container_name: student_profiler_service
     depends_on:
       postgres:
@@ -203,6 +206,7 @@ services:
     build:
       context: ./microservices/path-predictor
       dockerfile: Dockerfile
+    image: edupath/path-predictor:latest
     container_name: path_predictor_service
     depends_on:
       postgres:
@@ -220,6 +224,7 @@ services:
   reco-builder:
     build:
       context: ./microservices/recco-builder
+    image: edupath/recco-builder:latest
     container_name: reco_builder_service
     depends_on:
       postgres:
@@ -237,6 +242,7 @@ services:
     build:
       context: ./microservices/teacher-console-api
       dockerfile: Dockerfile
+    image: edupath/teacher-console-api:latest
     container_name: teacher_console_api_service
     depends_on:
       postgres:
@@ -254,6 +260,7 @@ services:
     build:
       context: ./microservices/student-coach-api
       dockerfile: Dockerfile
+    image: edupath/student-coach-api:latest
     container_name: student_coach_api_service
     depends_on:
       postgres:
@@ -271,6 +278,7 @@ services:
     build:
       context: ./microservices/api-gateway
       dockerfile: Dockerfile
+    image: edupath/api-gateway:latest
     container_name: api_gateway
     depends_on:
       - lms-connector

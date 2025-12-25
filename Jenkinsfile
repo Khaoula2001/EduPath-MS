@@ -14,7 +14,6 @@ pipeline {
                 checkout scm
             }
         }
-
         stage('Build & Tag Docker Images') {
             steps {
                 script {
@@ -52,6 +51,17 @@ pipeline {
                 bat 'docker images | findstr edupath'
             }
         }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    echo "Starting deployment..."
+                    bat "docker-compose down || true"
+                    bat "docker-compose up -d --remove-orphans"
+                    echo "Deployment completed successfully."
+                }
+            }
+        }
     }
 
     post {
@@ -66,3 +76,4 @@ pipeline {
         }
     }
 }
+
