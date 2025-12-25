@@ -18,10 +18,10 @@ pipeline {
                 stage('Node.js services') {
                     steps {
                         dir('microservices/api-gateway') {
-                            sh 'npm install'
+                            bat 'npm install'
                         }
                         dir('microservices/lms-connector') {
-                            sh 'npm install'
+                            bat 'npm install'
                         }
                     }
                 }
@@ -39,9 +39,9 @@ pipeline {
                             pythonServices.each { service ->
                                 dir(service) {
                                     echo "Installing dependencies for ${service}"
-                                    // sh 'python -m venv venv && . venv/bin/activate && pip install -r requirements.txt'
+                                    // bat 'python -m venv venv && . venv/bin/activate && pip install -r requirements.txt'
                                     // Alternative if venv is not desired in workspace:
-                                    sh 'pip install -r requirements.txt'
+                                    bat 'pip install -r requirements.txt'
                                 }
                             }
                         }
@@ -50,8 +50,8 @@ pipeline {
                 stage('Angular Frontend') {
                     steps {
                         dir('microservices/TeacherConsole') {
-                            sh 'npm install'
-                            sh 'npm run build'
+                            bat 'npm install'
+                            bat 'npm run build'
                         }
                     }
                 }
@@ -74,7 +74,7 @@ pipeline {
 
                     services.each { name, path ->
                         echo "Building Docker image for ${name}"
-                        sh "docker build -t ${DOCKER_REGISTRY}/${name}:${BUILD_NUMBER} -t ${DOCKER_REGISTRY}/${name}:latest ${path}"
+                        bat "docker build -t ${DOCKER_REGISTRY}/${name}:${BUILD_NUMBER} -t ${DOCKER_REGISTRY}/${name}:latest ${path}"
                     }
                 }
             }
@@ -83,7 +83,7 @@ pipeline {
         stage('Verification') {
             steps {
                 echo "Pipeline execution completed successfully."
-                sh 'docker images | grep edupath'
+                bat 'docker images | findstr edupath'
             }
         }
     }
