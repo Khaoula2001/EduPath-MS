@@ -39,9 +39,8 @@ services:
     depends_on:
       - moodledb
 
-
   # LMSConnector (NOUVEAU)
- 
+
   lmsconnector:
     build: ./LMSConnector
     container_name: lmsconnector
@@ -49,7 +48,7 @@ services:
       - "3000:3000"
     environment:
       MOODLE_API_URL: http://moodleapp/webservice/rest/server.php
-      MOODLE_TOKEN: xxxxxxxxxxxxxxxxx
+      MOODLE_TOKEN: 340fe84eeed17856a8bad6c59d2c87ed
       DB_HOST: lmsdb
       DB_NAME: lmsconnector
       DB_USER: lms
@@ -58,9 +57,8 @@ services:
       - moodleapp
       - lmsdb
 
-  
   # Base PostgreSQL LMSConnector
- 
+
   lmsdb:
     image: postgres:15
     container_name: lmsdb

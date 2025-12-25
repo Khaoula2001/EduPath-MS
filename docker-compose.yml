@@ -4,22 +4,22 @@ services:
   # ==========================================
   # PostgreSQL Database - ULTRA LÉGER
   # ==========================================
-#  postgres:
-#    image: postgres:15-alpine
-#    container_name: prepadata_postgres
-#    environment:
-#      POSTGRES_USER: prepadata
-#      POSTGRES_PASSWORD: prepadata_pwd
-#      POSTGRES_DB: analytics
-#    volumes:
-#      - ./microservices/prepa-data/sql:/docker-entrypoint-initdb.d:ro
-#    ports:
-#      - "5432:5432"
-#    healthcheck:
-#      test: ["CMD-SHELL", "pg_isready -U prepadata -d analytics"]
-#      interval: 5s
-#      timeout: 5s
-#      retries: 5
+  #  postgres:
+  #    image: postgres:15-alpine
+  #    container_name: prepadata_postgres
+  #    environment:
+  #      POSTGRES_USER: prepadata
+  #      POSTGRES_PASSWORD: prepadata_pwd
+  #      POSTGRES_DB: analytics
+  #    volumes:
+  #      - ./microservices/prepa-data/sql:/docker-entrypoint-initdb.d:ro
+  #    ports:
+  #      - "5432:5432"
+  #    healthcheck:
+  #      test: ["CMD-SHELL", "pg_isready -U prepadata -d analytics"]
+  #      interval: 5s
+  #      timeout: 5s
+  #      retries: 5
 
   postgres:
     image: postgres:15-alpine
@@ -29,25 +29,23 @@ services:
       POSTGRES_PASSWORD: prepadata_pwd
       POSTGRES_DB: analytics
     volumes:
-      - postgres_data:/var/lib/postgresql/data  # Changement important ici
+      - postgres_data:/var/lib/postgresql/data # Changement important ici
       - ./microservices/prepa-data/sql:/docker-entrypoint-initdb.d:ro
     ports:
       - "5432:5432"
-    restart: unless-stopped  # Ajoutez cette ligne
+    restart: unless-stopped # Ajoutez cette ligne
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U prepadata -d analytics" ]
-      interval: 10s  # Augmentez l'intervalle
+      interval: 10s # Augmentez l'intervalle
       timeout: 10s
       retries: 10
       start_period: 30s
-
-
 
   # ==========================================
   # Apache Airflow - VERSION OFFICIELLE
   # ==========================================
   airflow-init:
-    image: apache/airflow:2.7.3  # Version plus récente avec Python 3.8+
+    image: apache/airflow:2.7.3 # Version plus récente avec Python 3.8+
     container_name: airflow_init
     depends_on:
       - postgres
@@ -62,18 +60,10 @@ services:
       - ./microservices/prepa-data/data:/opt/prepadata/data
       - ./microservices/prepa-data/config:/opt/prepadata/config
     command: >
-      bash -c "
-      echo '=== ATTENTE POSTGRESQL ===' &&
-      until PGPASSWORD=prepadata_pwd psql -h postgres -U prepadata -d analytics -c 'SELECT 1' >/dev/null 2>&1; do
+      bash -c " echo '=== ATTENTE POSTGRESQL ===' && until PGPASSWORD=prepadata_pwd psql -h postgres -U prepadata -d analytics -c 'SELECT 1' >/dev/null 2>&1; do
         echo 'En attente de PostgreSQL...';
         sleep 2;
-      done &&
-      echo '=== INITIALISATION DB ===' &&
-      airflow db init &&
-      echo '=== UPGRADE DB ===' &&
-      airflow db upgrade &&
-      echo '=== CREATION UTILISATEUR ===' &&
-      airflow users create \
+      done && echo '=== INITIALISATION DB ===' && airflow db init && echo '=== UPGRADE DB ===' && airflow db upgrade && echo '=== CREATION UTILISATEUR ===' && airflow users create \
         --username admin \
         --password admin \
         --firstname Admin \
@@ -83,7 +73,7 @@ services:
       "
 
   airflow-webserver:
-    image: apache/airflow:2.7.3  # Version plus récente avec Python 3.8+
+    image: apache/airflow:2.7.3 # Version plus récente avec Python 3.8+
     container_name: prepadata_airflow_webserver
     restart: unless-stopped
     depends_on:
@@ -104,18 +94,10 @@ services:
     ports:
       - "8081:8080"
     command: >
-      bash -c "
-      echo '=== UPGRADE PIP ===' &&
-      pip install --upgrade pip &&
-      echo '=== INSTALL DEPENDENCIES ===' &&
-      pip install --default-timeout=1000 --retries=10 --no-cache-dir scikit-learn==1.3.0 pandas numpy && 
-      sleep 5 &&
-      echo '=== DEMARRAGE WEBSERVER ===' &&
-      airflow webserver --port 8080
-      "
+      bash -c " echo '=== UPGRADE PIP ===' && pip install --upgrade pip && echo '=== INSTALL DEPENDENCIES ===' && pip install --default-timeout=1000 --retries=10 --no-cache-dir scikit-learn==1.3.0 pandas numpy &&  sleep 5 && echo '=== DEMARRAGE WEBSERVER ===' && airflow webserver --port 8080 "
 
   airflow-scheduler:
-    image: apache/airflow:2.7.3  # Version plus récente avec Python 3.8+
+    image: apache/airflow:2.7.3 # Version plus récente avec Python 3.8+
     container_name: prepadata_airflow_scheduler
     restart: unless-stopped
     depends_on:
@@ -132,15 +114,7 @@ services:
       - ./microservices/prepa-data/data:/opt/prepadata/data
       - ./microservices/prepa-data/config:/opt/prepadata/config
     command: >
-      bash -c "
-      echo '=== UPGRADE PIP ===' &&
-      pip install --upgrade pip &&
-      echo '=== INSTALL DEPENDENCIES ===' &&
-      pip install --default-timeout=1000 --retries=10 --no-cache-dir scikit-learn==1.3.0 pandas numpy && 
-      sleep 10 &&
-      echo '=== DEMARRAGE SCHEDULER ===' &&
-      airflow scheduler
-      "
+      bash -c " echo '=== UPGRADE PIP ===' && pip install --upgrade pip && echo '=== INSTALL DEPENDENCIES ===' && pip install --default-timeout=1000 --retries=10 --no-cache-dir scikit-learn==1.3.0 pandas numpy &&  sleep 10 && echo '=== DEMARRAGE SCHEDULER ===' && airflow scheduler "
 
   prepadata:
     image: python:3.10-slim
@@ -160,27 +134,77 @@ services:
       - ./microservices/prepa-data/config:/opt/prepadata/config
       - ./microservices/prepa-data/requirements.txt:/opt/prepadata/requirements.txt
     command: >
-      bash -c "
-      pip install --upgrade pip &&
-      pip install --default-timeout=1000 --retries=10 --no-cache-dir pandas numpy scikit-learn sqlalchemy psycopg2-binary &&
-      echo 'PrepData Microservice ready!' &&
-      tail -f /dev/null
-      "
+      bash -c " pip install --upgrade pip && pip install --default-timeout=1000 --retries=10 --no-cache-dir pandas numpy scikit-learn sqlalchemy psycopg2-binary && echo 'PrepData Microservice ready!' && tail -f /dev/null "
+
+  # ==========================================
+  # MOODLE & LMS CONNECTOR (Merged)
+  # ==========================================
+  moodleapp:
+    build:
+      context: ./microservices/lms-connector/moodle-docker/moodle-docker
+    image: moodleapp:1.0
+    container_name: moodleapp
+    ports:
+      - "80:80"
+    volumes:
+      - moodledata:/var/www/moodledata
+    depends_on:
+      - moodledb
+
+  moodledb:
+    image: mysql:8.4.5
+    container_name: clouddb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-moodle}
+      MYSQL_USER: ${MYSQL_USER:-moodle}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-moodle}
+    volumes:
+      - clouddbdata:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    ports:
+      - "8082:80" # Changed to 8082 to avoid conflict with airflow-webserver
+    environment:
+      PMA_HOST: clouddb
+      PMA_PORT: 3306
+      PMA_USER: ${MYSQL_USER:-moodle}
+      PMA_PASSWORD: ${MYSQL_PASSWORD:-moodle}
+    depends_on:
+      - moodledb
+
+  lmsdb:
+    image: postgres:15
+    container_name: lmsdb_connector
+    restart: always
+    environment:
+      POSTGRES_DB: lmsconnector
+      POSTGRES_USER: lms
+      POSTGRES_PASSWORD: lmspass
+    volumes:
+      - lmsdbdata:/var/lib/postgresql/data
+      - ./microservices/lms-connector/moodle-docker/moodle-docker/LMSConnector/sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5433:5432"
 
   lms-connector:
     build:
-      context: ./microservices/lms-connector
-      dockerfile: Dockerfile
+      context: ./microservices/lms-connector/moodle-docker/moodle-docker/LMSConnector
     container_name: lms_connector_service
     depends_on:
-      postgres:
-        condition: service_healthy
+      - moodleapp
+      - lmsdb
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: analytics
-      DB_USER: prepadata
-      DB_PASSWORD: prepadata_pwd
+      MOODLE_API_URL: http://moodleapp/webservice/rest/server.php
+      MOODLE_TOKEN: 340fe84eeed17856a8bad6c59d2c87ed
+      DB_HOST: lmsdb
+      DB_NAME: lmsconnector
+      DB_USER: lms
+      DB_PASSWORD: lmspass
     ports:
       - "3001:3000"
 
@@ -308,13 +332,13 @@ services:
     image: rabbitmq:3.11-management-alpine
     container_name: rabbitmq
     ports:
-      - "5672:5672"  # Port for AMQP (messaging)
+      - "5672:5672" # Port for AMQP (messaging)
       - "15672:15672" # Port for web management UI
     environment:
       RABBITMQ_DEFAULT_USER: edupath
       RABBITMQ_DEFAULT_PASS: edupath
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -323,8 +347,8 @@ services:
     image: minio/minio
     container_name: minio_server
     ports:
-      - "9999:9000"    # Changed from 9000
-      - "9998:9001"    # Changed from 9001
+      - "9999:9000" # Changed from 9000
+      - "9998:9001" # Changed from 9001
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadminpassword
@@ -334,6 +358,8 @@ services:
 
 # Ajoutez à la fin du fichier :
 volumes:
-    postgres_data:
-    minio_data:
-
+  postgres_data:
+  minio_data:
+  clouddbdata:
+  moodledata:
+  lmsdbdata:

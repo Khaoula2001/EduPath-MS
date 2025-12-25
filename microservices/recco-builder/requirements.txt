@@ -4,4 +4,6 @@ torch==2.2.2
 faiss-cpu
 psycopg2-binary
 sqlalchemy
+sentence-transformers>=3.0.0
+numpy<2.0
 
