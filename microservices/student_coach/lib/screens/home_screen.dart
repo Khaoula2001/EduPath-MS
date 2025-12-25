@@ -1,10 +1,66 @@
 import 'package:flutter/material.dart';
+import '../models/student_profile.dart';
+import '../services/student_service.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final StudentService _studentService = StudentService();
+  StudentProfile? _profile;
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+      
+      // Simulation d'un ID étudiant (à remplacer par l'ID réel après authentification)
+      final profile = await _studentService.getMyProfile('student_123');
+      
+      setState(() {
+        _profile = profile;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Erreur: $_errorMessage', style: const TextStyle(color: Colors.red)),
+            ElevatedButton(onPressed: _loadData, child: const Text('Réessayer')),
+          ],
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -13,8 +69,10 @@ class HomeScreen extends StatelessWidget {
           _buildHeader(),
           const SizedBox(height: 24),
           _buildProgressCard(),
+          const SizedBox(height: 16),
+          _buildRiskBadge(),
           const SizedBox(height: 24),
-          _buildKeepItUpCard(),
+          _buildProfileDescriptionCard(),
           const SizedBox(height: 32),
           const Text(
             'Recent Activities',
@@ -26,28 +84,10 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _buildActivityItem(
-            icon: Icons.book_outlined,
+            icon: Icons.history,
             iconColor: Colors.blue,
-            title: 'Completed Math Chapter 5',
-            subtitle: '2 hours ago',
-          ),
-          _buildActivityItem(
-            icon: Icons.access_time,
-            iconColor: Colors.purple,
-            title: 'Study Session - Physics',
-            subtitle: '5 hours ago',
-          ),
-          _buildActivityItem(
-            icon: Icons.trending_up,
-            iconColor: Colors.green,
-            title: 'Quiz Score: 92%',
-            subtitle: '1 day ago',
-          ),
-          _buildActivityItem(
-            icon: Icons.notifications_none,
-            iconColor: Colors.orange,
-            title: 'New recommendation available',
-            subtitle: '2 days ago',
+            title: 'Dernière activité',
+            subtitle: _profile?.lastActivity ?? 'Aucune activité',
           ),
         ],
       ),
@@ -58,10 +98,10 @@ class HomeScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Column(
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Welcome back,',
               style: TextStyle(
                 fontSize: 24,
@@ -70,8 +110,8 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             Text(
-              'Sarah Johnson',
-              style: TextStyle(
+              _profile?.studentId ?? 'Chargement...',
+              style: const TextStyle(
                 fontSize: 16,
                 color: Colors.grey,
               ),
@@ -85,10 +125,10 @@ class HomeScreen extends StatelessWidget {
             color: const Color(0xffa199ff),
             borderRadius: BorderRadius.circular(24),
           ),
-          child: const Center(
+          child: Center(
             child: Text(
-              'SJ',
-              style: TextStyle(
+              _profile?.studentId.substring(0, 2).toUpperCase() ?? '..',
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
@@ -100,6 +140,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildProgressCard() {
+    final double completion = _profile?.completionRate ?? 0.0;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 32),
@@ -124,16 +165,16 @@ class HomeScreen extends StatelessWidget {
                 width: 120,
                 height: 120,
                 child: CircularProgressIndicator(
-                  value: 0.75,
+                  value: completion,
                   strokeWidth: 10,
                   backgroundColor: Colors.grey.withOpacity(0.1),
                   valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF8B80F8)),
                   strokeCap: StrokeCap.round,
                 ),
               ),
-              const Text(
-                '75%',
-                style: TextStyle(
+              Text(
+                '${(completion * 100).toInt()}%',
+                style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1A1C24),
@@ -143,7 +184,7 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           const Text(
-            'Weekly Goal Progress',
+            'Taux de Complétion Global',
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey,
@@ -155,7 +196,32 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildKeepItUpCard() {
+  Widget _buildRiskBadge() {
+    final risk = _profile?.riskLevel ?? 'Low';
+    Color color = risk == 'High' ? Colors.red : risk == 'Medium' ? Colors.orange : Colors.green;
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.warning_amber, color: color, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            'Risque : $risk',
+            style: TextStyle(color: color, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileDescriptionCard() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -173,7 +239,7 @@ class HomeScreen extends StatelessWidget {
           Row(
             children: [
               const Text(
-                'Keep it up!',
+                'Profil IA détecté',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -181,15 +247,24 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Text('🎯', style: TextStyle(fontSize: 20)),
+              const Text('🧠', style: TextStyle(fontSize: 20)),
             ],
           ),
           const SizedBox(height: 8),
           Text(
-            'You\'re doing great this week. Just a few more hours to reach your goal!',
+            'L\'IA vous a classé comme : ${_profile?.profileType ?? 'Calcul en cours...'}',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white.withOpacity(0.9),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Votre score d\'engagement est de ${((_profile?.engagementScore ?? 0) * 100).toInt()}%. Continuez vos efforts !',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withOpacity(0.8),
               height: 1.4,
             ),
           ),
@@ -250,3 +325,4 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
+
