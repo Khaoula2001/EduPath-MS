@@ -6,8 +6,7 @@ services:
   # ==========================================
 #  postgres:
 #    image: postgres:15-alpine
-#    container_name: prepadata_postgres
-#    environment:
+##    environment:
 #      POSTGRES_USER: prepadata
 #      POSTGRES_PASSWORD: prepadata_pwd
 #      POSTGRES_DB: analytics
@@ -23,7 +22,6 @@ services:
 
   postgres:
     image: postgres:15-alpine
-    container_name: prepadata_postgres
     environment:
       POSTGRES_USER: prepadata
       POSTGRES_PASSWORD: prepadata_pwd
@@ -50,7 +48,6 @@ services:
   # ==========================================
   airflow-init:
     image: apache/airflow:2.7.3  # Version plus récente avec Python 3.8+
-    container_name: airflow_init
     depends_on:
       - postgres
     environment:
@@ -84,7 +81,6 @@ services:
 
   airflow-webserver:
     image: apache/airflow:2.7.3  # Version plus récente avec Python 3.8+
-    container_name: prepadata_airflow_webserver
     restart: unless-stopped
     depends_on:
       - postgres
@@ -116,7 +112,6 @@ services:
 
   airflow-scheduler:
     image: apache/airflow:2.7.3  # Version plus récente avec Python 3.8+
-    container_name: prepadata_airflow_scheduler
     restart: unless-stopped
     depends_on:
       - airflow-webserver
@@ -146,7 +141,6 @@ services:
     build:
       context: ./microservices/prepa-data
     image: edupath/prepa-data:latest
-    container_name: prepadata_service
     depends_on:
       postgres:
         condition: service_healthy
@@ -169,7 +163,6 @@ services:
       context: ./microservices/lms-connector
       dockerfile: Dockerfile
     image: edupath/lms-connector:latest
-    container_name: lms_connector_service
     depends_on:
       postgres:
         condition: service_healthy
@@ -187,7 +180,6 @@ services:
       context: ./microservices/student-profiler
       dockerfile: Dockerfile
     image: edupath/student-profiler:latest
-    container_name: student_profiler_service
     depends_on:
       postgres:
         condition: service_healthy
@@ -207,7 +199,6 @@ services:
       context: ./microservices/path-predictor
       dockerfile: Dockerfile
     image: edupath/path-predictor:latest
-    container_name: path_predictor_service
     depends_on:
       postgres:
         condition: service_healthy
@@ -225,7 +216,6 @@ services:
     build:
       context: ./microservices/recco-builder
     image: edupath/recco-builder:latest
-    container_name: reco_builder_service
     depends_on:
       postgres:
         condition: service_healthy
@@ -243,7 +233,6 @@ services:
       context: ./microservices/teacher-console-api
       dockerfile: Dockerfile
     image: edupath/teacher-console-api:latest
-    container_name: teacher_console_api_service
     depends_on:
       postgres:
         condition: service_healthy
@@ -261,7 +250,6 @@ services:
       context: ./microservices/student-coach-api
       dockerfile: Dockerfile
     image: edupath/student-coach-api:latest
-    container_name: student_coach_api_service
     depends_on:
       postgres:
         condition: service_healthy
@@ -279,7 +267,6 @@ services:
       context: ./microservices/api-gateway
       dockerfile: Dockerfile
     image: edupath/api-gateway:latest
-    container_name: api_gateway
     depends_on:
       - lms-connector
       - student-profiler
@@ -292,14 +279,12 @@ services:
 
   mlflow:
     image: ghcr.io/mlflow/mlflow:v2.7.1
-    container_name: mlflow_server
     ports:
       - "5000:5000"
     command: mlflow server --host 0.0.0.0
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
-    container_name: elasticsearch
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -309,7 +294,6 @@ services:
 
   rabbitmq:
     image: rabbitmq:3.11-management-alpine
-    container_name: rabbitmq
     ports:
       - "5672:5672"  # Port for AMQP (messaging)
       - "15672:15672" # Port for web management UI
@@ -324,7 +308,6 @@ services:
 
   minio:
     image: minio/minio
-    container_name: minio_server
     ports:
       - "9999:9000"    # Changed from 9000
       - "9998:9001"    # Changed from 9001
