@@ -1,6 +1,6 @@
 pandas==2.0.3
 numpy==1.24.3
-sqlalchemy==2.0.19
+sqlalchemy==1.4.49
 psycopg2-binary==2.9.9
 apache-airflow==2.6.3
 scikit-learn>=1.6.1
