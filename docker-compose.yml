@@ -68,9 +68,9 @@ services:
       echo '=== UPGRADE PIP ===' &&
       pip install --upgrade pip &&
       echo '=== INSTALL DEPENDENCIES ===' &&
-      pip install --default-timeout=1000 --retries=10 --no-cache-dir scikit-learn==1.3.0 pandas numpy &&
+      pip install --default-timeout=1000 --retries=10 --no-cache-dir scikit-learn>=1.6.1 pandas numpy &&
       echo '=== ATTENTE POSTGRESQL ===' &&
-      until PGPASSWORD=prepadata_pwd psql -h postgres -U prepadata -d prepadata_db -c 'SELECT 1' >/dev/null 2>&1; do
+      until PGPASSWORD=prepadata_pwd psql -h postgres -U prepadata -d analytics -c 'SELECT 1' >/dev/null 2>&1; do
         echo 'En attente de PostgreSQL...';
         sleep 2;
       done &&
@@ -108,7 +108,7 @@ services:
       echo '=== UPGRADE PIP ===' &&
       pip install --upgrade pip &&
       echo '=== INSTALL DEPENDENCIES ===' &&
-      pip install --default-timeout=1000 --retries=10 --no-cache-dir scikit-learn==1.3.0 pandas numpy && 
+      pip install --default-timeout=1000 --retries=10 --no-cache-dir scikit-learn>=1.6.1 pandas numpy && 
       sleep 5 &&
       echo '=== DEMARRAGE WEBSERVER ===' &&
       airflow webserver --port 8080
@@ -136,7 +136,7 @@ services:
       echo '=== UPGRADE PIP ===' &&
       pip install --upgrade pip &&
       echo '=== INSTALL DEPENDENCIES ===' &&
-      pip install --default-timeout=1000 --retries=10 --no-cache-dir scikit-learn==1.3.0 pandas numpy && 
+      pip install --default-timeout=1000 --retries=10 --no-cache-dir scikit-learn>=1.6.1 pandas numpy && 
       sleep 10 &&
       echo '=== DEMARRAGE SCHEDULER ===' &&
       airflow scheduler
@@ -165,7 +165,7 @@ services:
     command: >
       bash -c "
       pip install --upgrade pip &&
-      pip install --default-timeout=1000 --retries=10 --no-cache-dir pandas numpy scikit-learn sqlalchemy psycopg2-binary fastapi uvicorn apache-airflow &&
+      pip install --default-timeout=1000 --retries=10 --no-cache-dir pandas numpy scikit-learn>=1.6.1 sqlalchemy psycopg2-binary fastapi uvicorn apache-airflow &&
       echo 'PrepData Microservice ready!' &&
       python /opt/prepadata/src/api.py
       "

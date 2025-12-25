@@ -11,7 +11,10 @@ logging.basicConfig(
 )
 
 # Create Database Tables
-Base.metadata.create_all(bind=engine)
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:
+    logging.error(f"Could not create database tables: {e}")
 
 app = FastAPI(
     title="StudentProfiler Microservice",
@@ -27,4 +30,4 @@ app.include_router(endpoints.router)
 
 # For debugging locally via python app/main.py
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
