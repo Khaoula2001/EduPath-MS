@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-bar-chart',
@@ -15,10 +16,10 @@ import { CommonModule } from '@angular/common';
       <div class="chart-body">
         <!-- Y Axis Labels -->
         <div class="y-axis">
-          <span>4</span>
-          <span>3</span>
-          <span>2</span>
-          <span>1</span>
+          <span>{{ maxVal }}</span>
+          <span>{{ maxVal * 0.75 | number:'1.0-0' }}</span>
+          <span>{{ maxVal * 0.5 | number:'1.0-0' }}</span>
+          <span>{{ maxVal * 0.25 | number:'1.0-0' }}</span>
           <span>0</span>
         </div>
 
@@ -37,9 +38,9 @@ import { CommonModule } from '@angular/common';
           <div class="bars-wrapper">
             <div *ngFor="let bar of bars; let i = index" class="bar-group">
                <div class="bar-track">
-                  <div class="bar" 
-                       [style.height.%]="(bar.value / 4) * 100"
-                       [class.highlight]="i === 3"> <!-- 70-80 is highlighted in example? Or hover logic -->
+                  <div class="bar"
+                       [style.height.%]="(bar.value / maxVal) * 100"
+                       [style.background-color]="getBarColor(i)">
                   </div>
                </div>
                <div class="x-label">{{ bar.label }}</div>
@@ -73,7 +74,7 @@ import { CommonModule } from '@angular/common';
       color: #1e293b;
       margin: 0 0 4px 0;
     }
-    
+
     .chart-subtitle {
      font-size: 12px;
      color: #94a3b8;
@@ -124,7 +125,7 @@ import { CommonModule } from '@angular/common';
 
     /* Make the bottom line solid if preferred, or all uniform dashed as per image */
     .grid-line:last-child {
-      border-top: 1px solid #e2e8f0; 
+      border-top: 1px solid #e2e8f0;
     }
 
     .bars-wrapper {
@@ -151,26 +152,25 @@ import { CommonModule } from '@angular/common';
 
     .bar-track {
       width: 100%;
-      height: 100%; 
+      height: 100%;
       display: flex;
       align-items: flex-end;
       justify-content: center;
       /* Hover effect container area could go here */
     }
-    
+
     .bar {
       width: 45px; /* Wider bars */
-      background-color: #3b82f6; /* Uniform Blue */
       border-radius: 4px 4px 0 0;
-      transition: height 0.4s ease, opacity 0.2s;
-      opacity: 1;
+      transition: height 0.4s ease, opacity 0.2s, background-color 0.2s;
+      opacity: 0.85;
     }
-    
+
     /* Hover effect */
     .bar-group:hover .bar {
       opacity: 0.9;
     }
-    
+
     /* Background highlight on hover */
     .bar-group::before {
       content: '';
@@ -185,7 +185,7 @@ import { CommonModule } from '@angular/common';
       transition: opacity 0.2s;
       z-index: -1;
     }
-    
+
     .bar-group:hover::before {
       opacity: 1;
     }
@@ -201,13 +201,34 @@ import { CommonModule } from '@angular/common';
     }
   `]
 })
-export class BarChart {
-  bars = [
-    { label: '0-50', value: 0 },
-    { label: '50-60', value: 2 },
-    { label: '60-70', value: 1 },
-    { label: '70-80', value: 4 },
-    { label: '80-90', value: 2 },
-    { label: '90-100', value: 3 }
-  ];
+export class BarChart implements OnInit {
+  bars: any[] = [];
+  maxVal = 5;
+
+  constructor(private readonly http: HttpClient) {}
+
+  ngOnInit(): void {
+    this.fetchData();
+  }
+
+  fetchData(): void {
+    this.http.get<any[]>('http://localhost:4000/teacher/grades-distribution', {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    }).subscribe({
+      next: (data: any[]) => {
+        this.bars = data;
+        this.maxVal = Math.max(...data.map((b: any) => b.value), 1);
+        // Ensure maxVal is nice for axis (multiples of 4)
+        if (this.maxVal % 4 !== 0) {
+          this.maxVal = this.maxVal + (4 - (this.maxVal % 4));
+        }
+      },
+      error: (err: any) => console.error('Erreur lors du chargement de la distribution des notes', err)
+    });
+  }
+
+  getBarColor(index: number): string {
+    const colors = ['#94a3b8', '#64748b', '#3b82f6', '#2563eb', '#1d4ed8', '#1e40af'];
+    return colors[index % colors.length];
+  }
 }

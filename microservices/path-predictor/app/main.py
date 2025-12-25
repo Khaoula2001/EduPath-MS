@@ -6,12 +6,13 @@ app = FastAPI(title="PathPredictor AI Service")
 
 @app.post("/predict")
 def predict(student_data: dict):
+    student_id = student_data.get("student_id")
     prob_success = predict_probability(student_data)
     prob_failure = 1 - prob_success
-    alert = generate_alert(prob_success)
+    alert = generate_alert(prob_success, student_id=student_id)
 
     return {
-        "student_id": student_data.get("student_id"),
+        "student_id": student_id,
         "probability_success": round(prob_success, 2),
         "probability_failure": round(prob_failure, 2),
         "alert": alert

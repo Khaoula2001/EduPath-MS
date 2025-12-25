@@ -4,33 +4,37 @@ services:
   # ==========================================
   # PostgreSQL Database - ULTRA LÉGER
   # ==========================================
-  #  postgres:
-  #    image: postgres:15-alpine
-  #    container_name: prepadata_postgres
-  #    environment:
-  #      POSTGRES_USER: prepadata
-  #      POSTGRES_PASSWORD: prepadata_pwd
-  #      POSTGRES_DB: analytics
-  #    volumes:
-  #      - ./microservices/prepa-data/sql:/docker-entrypoint-initdb.d:ro
-  #    ports:
-  #      - "5432:5432"
-  #    healthcheck:
-  #      test: ["CMD-SHELL", "pg_isready -U prepadata -d analytics"]
-  #      interval: 5s
-  #      timeout: 5s
-  #      retries: 5
+
+#  postgres:
+#    image: postgres:15-alpine
+##    environment:
+#      POSTGRES_USER: prepadata
+#      POSTGRES_PASSWORD: prepadata_pwd
+#      POSTGRES_DB: analytics
+#    volumes:
+#      - ./microservices/prepa-data/sql:/docker-entrypoint-initdb.d:ro
+#    ports:
+#      - "5432:5432"
+#    healthcheck:
+#      test: ["CMD-SHELL", "pg_isready -U prepadata -d analytics"]
+#      interval: 5s
+#      timeout: 5s
+#      retries: 5
 
   postgres:
     image: postgres:15-alpine
-    container_name: prepadata_postgres
     environment:
       POSTGRES_USER: prepadata
       POSTGRES_PASSWORD: prepadata_pwd
       POSTGRES_DB: analytics
     volumes:
-      - postgres_data:/var/lib/postgresql/data # Changement important ici
-      - ./microservices/prepa-data/sql:/docker-entrypoint-initdb.d:ro
+
+
+      - postgres_data:/var/lib/postgresql/data  # Changement important ici
+      - ./sql/init-multiple-databases.sql:/docker-entrypoint-initdb.d/00-init-databases.sql:ro
+      - ./microservices/prepa-data/sql:/docker-entrypoint-initdb.d/01-prepadata:ro
+      - ./microservices/lms-connector/sql:/docker-entrypoint-initdb.d/02-lms:ro
+
     ports:
       - "5432:5432"
     restart: unless-stopped # Ajoutez cette ligne
@@ -45,13 +49,12 @@ services:
   # Apache Airflow - VERSION OFFICIELLE
   # ==========================================
   airflow-init:
-    image: apache/airflow:2.7.3 # Version plus récente avec Python 3.8+
-    container_name: airflow_init
+    image: apache/airflow:2.7.3  # Version plus récente avec Python 3.8+
     depends_on:
       - postgres
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/analytics
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/prepadata_db
       AIRFLOW__CORE__LOAD_EXAMPLES: "False"
       AIRFLOW__CORE__FERNET_KEY: "81HqDtbqAywKSOumSha3BhWNOdQ26slT6K0YaZeZyPs="
     volumes:
@@ -60,28 +63,36 @@ services:
       - ./microservices/prepa-data/data:/opt/prepadata/data
       - ./microservices/prepa-data/config:/opt/prepadata/config
     command: >
-      bash -c " echo '=== ATTENTE POSTGRESQL ===' && until PGPASSWORD=prepadata_pwd psql -h postgres -U prepadata -d analytics -c 'SELECT 1' >/dev/null 2>&1; do
+
+
+      bash -c "
+      echo '=== UPGRADE PIP ===' &&
+      pip install --upgrade pip &&
+      echo '=== INSTALL DEPENDENCIES ===' &&
+      pip install --default-timeout=1000 --retries=10 --no-cache-dir scikit-learn>=1.6.1 pandas numpy &&
+      echo '=== ATTENTE POSTGRESQL ===' &&
+      until PGPASSWORD=prepadata_pwd psql -h postgres -U prepadata -d analytics -c 'SELECT 1' >/dev/null 2>&1; do
         echo 'En attente de PostgreSQL...';
         sleep 2;
-      done && echo '=== INITIALISATION DB ===' && airflow db init && echo '=== UPGRADE DB ===' && airflow db upgrade && echo '=== CREATION UTILISATEUR ===' && airflow users create \
-        --username admin \
-        --password admin \
-        --firstname Admin \
-        --lastname User \
-        --role Admin \
-        --email admin@example.com || echo 'Utilisateur existe déjà'
+      done &&
+      echo '=== INITIALISATION DB ===' &&
+      airflow db init &&
+      echo '=== UPGRADE DB ===' &&
+      airflow db upgrade &&
+      echo '=== CREATION UTILISATEUR ===' &&
+      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || echo 'Utilisateur existe déjà'
       "
 
   airflow-webserver:
-    image: apache/airflow:2.7.3 # Version plus récente avec Python 3.8+
-    container_name: prepadata_airflow_webserver
+    image: apache/airflow:2.7.3  # Version plus récente avec Python 3.8+
+
     restart: unless-stopped
     depends_on:
       - postgres
       - airflow-init
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/analytics
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/prepadata_db
       AIRFLOW__CORE__LOAD_EXAMPLES: "False"
       AIRFLOW__CORE__FERNET_KEY: "81HqDtbqAywKSOumSha3BhWNOdQ26slT6K0YaZeZyPs="
       AIRFLOW__WEBSERVER__SECRET_KEY: "46e8d8c7a3f2b1d9e5c4a6f8b2d7e9c1a3f5b8d2e7c9a4f6b1d8e3c7a9f2b5d4"
@@ -94,17 +105,27 @@ services:
     ports:
       - "8081:8080"
     command: >
-      bash -c " echo '=== UPGRADE PIP ===' && pip install --upgrade pip && echo '=== INSTALL DEPENDENCIES ===' && pip install --default-timeout=1000 --retries=10 --no-cache-dir scikit-learn==1.3.0 pandas numpy &&  sleep 5 && echo '=== DEMARRAGE WEBSERVER ===' && airflow webserver --port 8080 "
+
+
+      bash -c "
+      echo '=== UPGRADE PIP ===' &&
+      pip install --upgrade pip &&
+      echo '=== INSTALL DEPENDENCIES ===' &&
+      pip install --default-timeout=1000 --retries=10 --no-cache-dir scikit-learn>=1.6.1 pandas numpy && 
+      sleep 5 &&
+      echo '=== DEMARRAGE WEBSERVER ===' &&
+      airflow webserver --port 8080
+      "
 
   airflow-scheduler:
-    image: apache/airflow:2.7.3 # Version plus récente avec Python 3.8+
-    container_name: prepadata_airflow_scheduler
+    image: apache/airflow:2.7.3  # Version plus récente avec Python 3.8+
+
     restart: unless-stopped
     depends_on:
       - airflow-webserver
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/analytics
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/prepadata_db
       AIRFLOW__CORE__LOAD_EXAMPLES: "False"
       AIRFLOW__CORE__FERNET_KEY: "81HqDtbqAywKSOumSha3BhWNOdQ26slT6K0YaZeZyPs="
       AIRFLOW__WEBSERVER__SECRET_KEY: "46e8d8c7a3f2b1d9e5c4a6f8b2d7e9c1a3f5b8d2e7c9a4f6b1d8e3c7a9f2b5d4"
@@ -114,21 +135,34 @@ services:
       - ./microservices/prepa-data/data:/opt/prepadata/data
       - ./microservices/prepa-data/config:/opt/prepadata/config
     command: >
-      bash -c " echo '=== UPGRADE PIP ===' && pip install --upgrade pip && echo '=== INSTALL DEPENDENCIES ===' && pip install --default-timeout=1000 --retries=10 --no-cache-dir scikit-learn==1.3.0 pandas numpy &&  sleep 10 && echo '=== DEMARRAGE SCHEDULER ===' && airflow scheduler "
+
+      bash -c "
+      echo '=== UPGRADE PIP ===' &&
+      pip install --upgrade pip &&
+      echo '=== INSTALL DEPENDENCIES ===' &&
+      pip install --default-timeout=1000 --retries=10 --no-cache-dir scikit-learn>=1.6.1 pandas numpy && 
+      sleep 10 &&
+      echo '=== DEMARRAGE SCHEDULER ===' &&
+      airflow scheduler
+      "
+
 
   prepadata:
-    image: python:3.10-slim
-    container_name: prepadata_service
+    build:
+      context: ./microservices/prepa-data
+    image: edupath/prepa-data:latest
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       PG_HOST: postgres
       PG_PORT: 5432
-      PG_DB: analytics
+      PG_DB: prepadata_db
       PG_USER: prepadata
       PG_PASSWORD: prepadata_pwd
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/prepadata_db
     volumes:
+
       - ./microservices/prepa-data/src:/opt/prepadata/src
       - ./microservices/prepa-data/data:/opt/prepadata/data
       - ./microservices/prepa-data/config:/opt/prepadata/config
@@ -195,16 +229,19 @@ services:
     build:
       context: ./microservices/lms-connector/moodle-docker/moodle-docker/LMSConnector
     container_name: lms_connector_service
+
     depends_on:
       - moodleapp
       - lmsdb
     environment:
+
       MOODLE_API_URL: http://moodleapp/webservice/rest/server.php
       MOODLE_TOKEN: 340fe84eeed17856a8bad6c59d2c87ed
       DB_HOST: lmsdb
       DB_NAME: lmsconnector
       DB_USER: lms
       DB_PASSWORD: lmspass
+
     ports:
       - "3001:3000"
 
@@ -212,14 +249,14 @@ services:
     build:
       context: ./microservices/student-profiler
       dockerfile: Dockerfile
-    container_name: student_profiler_service
+    image: edupath/student-profiler:latest
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       PG_HOST: postgres
       PG_PORT: 5432
-      PG_DB: analytics
+      PG_DB: profiler_db
       PG_USER: prepadata
       PG_PASSWORD: prepadata_pwd
     volumes:
@@ -231,14 +268,14 @@ services:
     build:
       context: ./microservices/path-predictor
       dockerfile: Dockerfile
-    container_name: path_predictor_service
+    image: edupath/path-predictor:latest
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       PG_HOST: postgres
       PG_PORT: 5432
-      PG_DB: analytics
+      PG_DB: predictor_db
       PG_USER: prepadata
       PG_PASSWORD: prepadata_pwd
       MLFLOW_TRACKING_URI: http://mlflow:5000
@@ -248,15 +285,14 @@ services:
   reco-builder:
     build:
       context: ./microservices/recco-builder
-      dockerfile: Dockerfile
-    container_name: reco_builder_service
+    image: edupath/recco-builder:latest
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       PG_HOST: postgres
       PG_PORT: 5432
-      PG_DB: analytics
+      PG_DB: reco_db
       PG_USER: prepadata
       PG_PASSWORD: prepadata_pwd
     ports:
@@ -266,14 +302,14 @@ services:
     build:
       context: ./microservices/teacher-console-api
       dockerfile: Dockerfile
-    container_name: teacher_console_api_service
+    image: edupath/teacher-console-api:latest
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       PG_HOST: postgres
       PG_PORT: 5432
-      PG_DB: analytics
+      PG_DB: teacher_db
       PG_USER: prepadata
       PG_PASSWORD: prepadata_pwd
     ports:
@@ -283,14 +319,14 @@ services:
     build:
       context: ./microservices/student-coach-api
       dockerfile: Dockerfile
-    container_name: student_coach_api_service
+    image: edupath/student-coach-api:latest
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       PG_HOST: postgres
       PG_PORT: 5432
-      PG_DB: analytics
+      PG_DB: student_db
       PG_USER: prepadata
       PG_PASSWORD: prepadata_pwd
     ports:
@@ -300,7 +336,7 @@ services:
     build:
       context: ./microservices/api-gateway
       dockerfile: Dockerfile
-    container_name: api_gateway
+    image: edupath/api-gateway:latest
     depends_on:
       - lms-connector
       - student-profiler
@@ -313,14 +349,12 @@ services:
 
   mlflow:
     image: ghcr.io/mlflow/mlflow:v2.7.1
-    container_name: mlflow_server
     ports:
       - "5000:5000"
     command: mlflow server --host 0.0.0.0
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
-    container_name: elasticsearch
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -330,7 +364,6 @@ services:
 
   rabbitmq:
     image: rabbitmq:3.11-management-alpine
-    container_name: rabbitmq
     ports:
       - "5672:5672" # Port for AMQP (messaging)
       - "15672:15672" # Port for web management UI
@@ -345,7 +378,6 @@ services:
 
   minio:
     image: minio/minio
-    container_name: minio_server
     ports:
       - "9999:9000" # Changed from 9000
       - "9998:9001" # Changed from 9001
@@ -356,10 +388,10 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
 
-# Ajoutez à la fin du fichier :
 volumes:
   postgres_data:
   minio_data:
   clouddbdata:
   moodledata:
   lmsdbdata:
+

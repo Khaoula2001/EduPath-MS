@@ -1,8 +1,6 @@
 from sqlalchemy import Column, String, Text, UUID
-from sqlalchemy.ext.declarative import declarative_base
 import uuid
-
-Base = declarative_base()
+from app.core.database import Base
 
 class Resource(Base):
     __tablename__ = 'resources'

@@ -100,16 +100,16 @@ def read_oulad(oulad_dir: str) -> Dict[str, pd.DataFrame]:
 
 def read_from_postgres(pg_cfg: Dict[str, Any], source_tag: str) -> Dict[str, pd.DataFrame]:
     """
-    Read data from PostgreSQL analytics.raw_learning_data table.
+    Read data from PostgreSQL raw_learning_data table.
     
     Args:
-        pg_cfg: PostgreSQL configuration
+        pg_cfg: PostgreSQL configuration (Source database where raw_learning_data is)
         source_tag: Source identifier ('OULAD' or 'MOODLE')
     
     Returns:
         Dictionary of DataFrames keyed by data type
     """
-    logger.info(f"Loading data from PostgreSQL, source={source_tag}")
+    logger.info(f"Loading data from PostgreSQL, source={source_tag}, db={pg_cfg.get('dbname')}")
     engine = get_postgres_engine(pg_cfg)
 
     data_types = ['student_info', 'student_registration', 'assessments',
@@ -118,7 +118,7 @@ def read_from_postgres(pg_cfg: Dict[str, Any], source_tag: str) -> Dict[str, pd.
     result = {}
     for dtype in data_types:
         query = f"""
-        SELECT * FROM analytics.raw_learning_data 
+        SELECT * FROM raw_learning_data 
         WHERE source = '{source_tag}' 
         AND data_type = '{dtype}'
         AND processed = FALSE

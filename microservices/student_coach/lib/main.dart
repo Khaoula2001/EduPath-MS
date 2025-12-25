@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/main_screen.dart';
+import 'screens/login_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -31,7 +31,8 @@ class MyApp extends StatelessWidget {
           elevation: 10,
         ),
       ),
-      home: const MainScreen(),
+      home: const LoginScreen(),
     );
   }
 }
+

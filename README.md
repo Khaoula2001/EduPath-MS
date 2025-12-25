@@ -1,102 +1,118 @@
-# 🎓 EduPath-MS — Learning Analytics & Recommandations
+# EduPath-MS — Learning Analytics & Recommendations
 
-**EduPath-MS** est une plateforme intelligente basée sur une architecture microservices conçue pour accompagner la réussite des étudiants dans l'enseignement supérieur. Le système analyse les traces d'apprentissage issues des LMS (Learning Management Systems) pour prédire les risques de décrochage et proposer des recommandations pédagogiques personnalisées.
-
----
-
-## 🏗️ Architecture du Système
-
-Le projet adopte une architecture **orientée événements (Event-Driven)** orchestrée par un bus de messages (Kafka/RabbitMQ) au sein d'un environnement **Docker**.
-
-Architecture EduPath-MS
-
-![WhatsApp Image 2025-12-22 at 01 58 45](https://github.com/user-attachments/assets/ab2c9e3f-e140-4064-862e-550611224901)
-
-
-### 🔄 Flux de Données
-1. **Extraction** : Les traces brutes sont récupérées de Moodle/Canvas.
-2. **Transformation** : Nettoyage et calcul d'indicateurs (engagement, score).
-3. **Analyse & Profiling** : Classification des étudiants par comportements.
-4. **Prédiction** : Calcul des probabilités de réussite/échec.
-5. **Recommandation** : Suggestion de ressources via IA sémantique.
-6. **Restitution** : Tableaux de bord pour les profs et coaching mobile pour les élèves.
+**EduPath-MS** is an intelligent platform based on a microservices architecture designed to support student success in higher education. The system analyzes learning traces from LMS (Learning Management Systems) to predict dropout risks and provide personalized pedagogical recommendations.
 
 ---
 
-## 🛠️ Composants & Microservices
+## System Architecture
 
-### 🔌 Microservices Backend (Data & IA)
+The project adopts a secure, event-driven microservices architecture, fully containerized via **Docker** and orchestrated by **Docker Compose**.
 
-| Service | Technologie | Port | Description | Dépendances Clés |
-| :--- | :--- | :--- | :--- | :--- |
-| **LMSConnector** | Node.js | `3001` | Synchronisation des logs (Moodle/Canvas). | `axios`, `oauth2`, `pg` |
-| **PrepaData** | Python / Airflow | `8081` | ETL, agrégation temporelle et indicateurs. | `pandas`, `airflow`, `sqlalchemy` |
-| **StudentProfiler** | FastAPI | `8000` | Clustering et détection de typologies. | `scikit-learn`, `KMeans`, `PCA` |
-| **PathPredictor** | FastAPI | `8002` | Prédiction des trajectoires et risques. | `XGBoost`, `MLflow`, `pydantic` |
-| **RecoBuilder** | Flask / Python | `8003` | Moteur de recommandation sémantique. | `BERT (Transformers)`, `Faiss`, `numpy` |
-| **TeacherConsole-API**| FastAPI | `8004` | API de gestion pur les enseignants. | `fastapi`, `postgresql` |
-| **StudentCoach-API** | FastAPI | `8005` | API de coaching et feedback étudiant. | `fastapi`, `pydantic` |
-
-### 💻 Interfaces (Frontend & Mobile)
-
-*   **TeacherConsole (Angular)** : Dashboard analytique complet avec visualisations (Chart.js) pour identifier les groupes d'étudiants à risque.
-*   **StudentCoach (Flutter)** : Application mobile permettant aux étudiants de suivre leur progression et d'accéder aux ressources recommandées.
-
-### 🗄️ Infrastructure & Stockage
-
-*   **PostgreSQL** : Multiples instances pour les données analytiques, historiques et métadonnées.
-*   **MinIO** `9000` : Stockage objet pour les contenus multimédias (vidéos, PDF).
-*   **RabbitMQ** : Bus d'événements pour la communication asynchrone.
-*   **MLflow** `5000` : Tracking des modèles de Machine Learning.
-*   **API Gateway** `4000` : Port d'entrée unique pour les requêtes front-end.
+### Main Data Flow
+1.  **Extraction**: The `LMS Connector` retrieves grades and logs from Moodle.
+2.  **Transformation (ETL)**: `PrepaData` (via **Airflow**) cleans and transforms this data into performance indicators (KPIs).
+3.  **Artificial Intelligence**:
+    -   `StudentProfiler` segments students by behavior (K-Means).
+    -   `PathPredictor` predicts dropout risks (XGBoost).
+    -   `RecoBuilder` suggests adapted resources (BERT & Faiss).
+4.  **Communication & Alerting**: Critical alerts are broadasted via **RabbitMQ**.
+5.  **Restitution**: Interfaces consume data via a centralized **API Gateway**.
 
 ---
 
-## 🚀 Installation et Configuration
+## Project Structure
 
-### Prérequis
-*   **Docker** & **Docker Compose**
-*   **Python 3.10+** (pour le développement local)
-*   **Node.js** (pour LMSConnector)
-
-### Installation rapide
-
-1. **Cloner le projet** :
-   ```bash
-   git clone https://github.com/Khaoula2001/EduPath-MS.git
-   cd EduPath-MS
-   ```
-
-2. **Lancer l'infrastructure (Docker)** :
-   ```bash
-   docker-compose up -d --build
-   ```
-
-3. **Initialiser les ressources (Seeding)** :
-   ```bash
-   python microservices/recco-builder/seed_resources.py
-   ```
+```
+EduPath-MS/
+├── microservices/
+│   ├── api-gateway/          # Unique entry point (Node.js)
+│   ├── lms-connector/        # Moodle Connector (Node.js)
+│   ├── prepa-data/           # ETL Pipeline & API (Python/Airflow)
+│   ├── student-profiler/     # Student Clustering (FastAPI)
+│   ├── path-predictor/       # Success Prediction (FastAPI)
+│   ├── recco-builder/        # Recommendation Engine (FastAPI)
+│   ├── teacher-console-api/  # Teacher Dashboard Backend (FastAPI)
+│   ├── student-coach-api/    # Student App Backend (FastAPI)
+│   ├── TeacherConsole/       # Teacher Frontend (Angular)
+│   └── student_coach/        # Student Mobile App (Flutter)
+├── sql/                      # SQL Initialization Scripts
+├── docker-compose.yml        # Multi-service Orchestration
+├── Jenkinsfile               # Dockerized CI/CD Pipeline
+└── README.md                 # Documentation
+```
 
 ---
 
-## ✨ Fonctionnalités Clés
+## Components & Microservices
 
-*    **Détection Précoce** : Identification automatique des étudiants "At-Risk" via XGBoost.
-*    **Profiling Comportemental** : Segmentation (Procrastinateurs, Assidus, Fragiles).
-*    **Recommandations Dynamiques** : Adaptation des suggestions selon le profil et le niveau de risque.
-*    **Alerting Enseignant** : Notifications en temps réel lors de dérives de performance.
-*    **Support Multimédia** : Intégration de vidéos et quiz interactifs via MinIO.
+All services are accessible via the **API Gateway** (Port `4000`).
 
----
-
-## 🎯 Objectifs du Projet
-
-*   **Réduire le taux d'abandon** scolaire par un suivi personnalisé.
-*   **Automatiser** l'analyse des traces d'apprentissage massives.
-*   **Optimiser** le temps des enseignants grâce à des outils de remédiation ciblés.
-*   **Favoriser l'engagement** étudiant par des feedbacks motivants.
+| Service | Technology | Port | Main Role |
+| :--- | :--- | :--- | :--- |
+| **API Gateway** | Node.js / Express | `4000` | Gateway, JWT Security and Routing Proxy. |
+| **LMS Connector** | Node.js / Express | `3001` | Interface with Moodle APIs. |
+| **PrepaData** | FastAPI / Airflow | `8001` | ETL, Feature Engineering and Airflow orchestration. |
+| **StudentProfiler** | FastAPI | `8000` | Behavioral student segmentation. |
+| **PathPredictor** | FastAPI | `8002` | Success prediction and RabbitMQ alerting. |
+| **RecoBuilder** | FastAPI / BERT | `8003` | Semantic similarity-based recommendations. |
+| **TeacherConsole API**| FastAPI | `8004` | Backend for the Angular dashboard. |
+| **StudentCoach API** | FastAPI | `8005` | Backend for the Flutter application. |
 
 ---
 
-## 📝 Licence
-Ce projet est développé dans le cadre de la recherche en **Learning Analytics** .
+## CI/CD & Pipeline
+
+The project includes a high-performance **Jenkinsfile** that automates:
+-   Source code checkout.
+-   Parallel build of all microservice Docker images.
+-   Automatic versioning via `BUILD_NUMBER`.
+-   Image tagging (`latest` and versioned) for the Docker registry.
+
+---
+
+## Infrastructure & Storage
+
+-   **PostgreSQL**: Dedicated databases per service (`lms_db`, `prepadata_db`, etc.).
+-   **RabbitMQ**: Message broker for asynchronous communication (Alerting).
+-   **MinIO** (`9999`): S3-compatible storage for pedagogical documents.
+-   **MLflow** (`5000`): Machine Learning model lifecycle management.
+-   **Apache Airflow** (`8081`): Visual orchestration of ETL pipelines.
+-   **Elasticsearch** (`9200`): Log analysis and search.
+
+---
+
+## Installation
+
+### Prerequisites
+-   **Docker Desktop** (with Docker Compose)
+-   **Jenkins** (Optional, for CI/CD)
+
+### Startup
+
+1.  **Cloning**:
+    ```bash
+    git clone https://github.com/NisrineLachguer/EduPath-MS.git
+    cd EduPath-MS
+    ```
+
+2.  **Launch (Build & Start)**:
+    ```bash
+    docker-compose up -d --build
+    ```
+    *Note: The initial download of AI models (BERT) may take some time during the first build.*
+
+---
+
+## Security
+
+Access to microservices is protected by **JWT** via the Gateway:
+1.  Authentication via `POST /login`.
+2.  Token inclusion in the `Authorization: Bearer <your_token>` header.
+
+---
+
+## Interfaces
+
+-   **Teacher Dashboard**: Powerful Web interface developed in Angular.
+-   **Student App**: Native mobile experience via Flutter.
+
