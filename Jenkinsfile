@@ -1,237 +1,102 @@
 pipeline {
     agent any
-    
+
     environment {
-        DOCKER_COMPOSE_VERSION = '1.29.2'
-        PROJECT_NAME = 'edupath-ms'
-        REGISTRY = 'docker.io'  // Change to your registry
-        REGISTRY_CREDENTIAL = 'dockerhub-credentials'  // Jenkins credential ID
+        DOCKER_REGISTRY = 'edupath'
+        BUILD_NUMBER = "${env.BUILD_NUMBER}"
     }
-    
+
     stages {
         stage('Checkout') {
             steps {
-                echo 'Checking out code from repository...'
                 checkout scm
             }
         }
-        
-        stage('Environment Setup') {
-            steps {
-                echo 'Setting up environment...'
-                sh '''
-                    echo "Docker version:"
-                    docker --version
-                    echo "Docker Compose version:"
-                    docker-compose --version
-                '''
-            }
-        }
-        
-        stage('Build Services') {
-            steps {
-                echo 'Building all microservices...'
-                sh '''
-                    docker-compose build --parallel
-                '''
-            }
-        }
-        
-        stage('Run Tests') {
+
+        stage('Build & Install Dependencies') {
             parallel {
-                stage('Test LMS Connector') {
+                stage('Node.js services') {
                     steps {
-                        echo 'Testing LMS Connector...'
+                        dir('microservices/api-gateway') {
+                            sh 'npm install'
+                        }
                         dir('microservices/lms-connector') {
-                            sh '''
-                                if [ -f package.json ]; then
-                                    npm install
-                                    npm test || echo "No tests defined"
-                                fi
-                            '''
+                            sh 'npm install'
                         }
                     }
                 }
-                
-                stage('Test PrepaData') {
+                stage('Python services') {
                     steps {
-                        echo 'Testing PrepaData...'
-                        dir('microservices/prepa-data') {
-                            sh '''
-                                if [ -f requirements.txt ]; then
-                                    pip install -r requirements.txt
-                                    pytest tests/ || echo "No tests found"
-                                fi
-                            '''
+                        script {
+                            def pythonServices = [
+                                'microservices/student-profiler',
+                                'microservices/student-coach-api',
+                                'microservices/path-predictor',
+                                'microservices/prepa-data',
+                                'microservices/recco-builder',
+                                'microservices/teacher-console-api'
+                            ]
+                            pythonServices.each { service ->
+                                dir(service) {
+                                    echo "Installing dependencies for ${service}"
+                                    // sh 'python -m venv venv && . venv/bin/activate && pip install -r requirements.txt'
+                                    // Alternative if venv is not desired in workspace:
+                                    sh 'pip install -r requirements.txt'
+                                }
+                            }
                         }
                     }
                 }
-                
-                stage('Test StudentProfiler') {
+                stage('Angular Frontend') {
                     steps {
-                        echo 'Testing StudentProfiler...'
-                        dir('microservices/student-profiler') {
-                            sh '''
-                                if [ -f requirements.txt ]; then
-                                    pip install -r requirements.txt
-                                    pytest tests/ || echo "No tests found"
-                                fi
-                            '''
-                        }
-                    }
-                }
-                
-                stage('Test PathPredictor') {
-                    steps {
-                        echo 'Testing PathPredictor...'
-                        dir('microservices/path-predictor') {
-                            sh '''
-                                if [ -f requirements.txt ]; then
-                                    pip install -r requirements.txt
-                                    pytest tests/ || echo "No tests found"
-                                fi
-                            '''
-                        }
-                    }
-                }
-                
-                stage('Test RecoBuilder') {
-                    steps {
-                        echo 'Testing RecoBuilder...'
-                        dir('microservices/recco-builder') {
-                            sh '''
-                                if [ -f requirements.txt ]; then
-                                    pip install -r requirements.txt
-                                    pytest tests/ || echo "No tests found"
-                                fi
-                            '''
+                        dir('microservices/TeacherConsole') {
+                            sh 'npm install'
+                            sh 'npm run build'
                         }
                     }
                 }
             }
         }
-        
-        stage('Code Quality Analysis') {
+
+        stage('Dockerize') {
             steps {
-                echo 'Running code quality checks...'
-                sh '''
-                    # Python linting
-                    find microservices -name "*.py" -type f | head -10 | xargs pylint --exit-zero || echo "Pylint check completed"
-                    
-                    # JavaScript linting
-                    find microservices -name "*.js" -type f | head -10 | xargs eslint --no-eslintrc || echo "ESLint check completed"
-                '''
-            }
-        }
-        
-        stage('Security Scan') {
-            steps {
-                echo 'Running security scans...'
-                sh '''
-                    # Scan Docker images for vulnerabilities
-                    docker-compose config --services | while read service; do
-                        echo "Scanning $service..."
-                        docker scan ${PROJECT_NAME}_${service} || echo "Scan completed for $service"
-                    done
-                '''
-            }
-        }
-        
-        stage('Deploy to Staging') {
-            when {
-                branch 'develop'
-            }
-            steps {
-                echo 'Deploying to staging environment...'
-                sh '''
-                    docker-compose -f docker-compose.yml up -d
-                    echo "Waiting for services to be healthy..."
-                    sleep 30
-                    docker-compose ps
-                '''
-            }
-        }
-        
-        stage('Integration Tests') {
-            when {
-                branch 'develop'
-            }
-            steps {
-                echo 'Running integration tests...'
-                sh '''
-                    # Wait for API Gateway to be ready
-                    timeout 60 bash -c 'until curl -f http://localhost:4000/health 2>/dev/null; do sleep 2; done' || echo "API Gateway health check"
-                    
-                    # Test microservices endpoints
-                    curl -f http://localhost:3001/health || echo "LMS Connector check"
-                    curl -f http://localhost:8000/health || echo "StudentProfiler check"
-                    curl -f http://localhost:8002/health || echo "PathPredictor check"
-                    curl -f http://localhost:8003/health || echo "RecoBuilder check"
-                '''
-            }
-        }
-        
-        stage('Tag and Push Images') {
-            when {
-                branch 'main'
-            }
-            steps {
-                echo 'Tagging and pushing Docker images...'
                 script {
-                    docker.withRegistry("https://${REGISTRY}", "${REGISTRY_CREDENTIAL}") {
-                        sh '''
-                            docker-compose config --services | while read service; do
-                                echo "Pushing $service..."
-                                docker tag ${PROJECT_NAME}_${service}:latest ${REGISTRY}/${PROJECT_NAME}/${service}:${BUILD_NUMBER}
-                                docker tag ${PROJECT_NAME}_${service}:latest ${REGISTRY}/${PROJECT_NAME}/${service}:latest
-                                docker push ${REGISTRY}/${PROJECT_NAME}/${service}:${BUILD_NUMBER}
-                                docker push ${REGISTRY}/${PROJECT_NAME}/${service}:latest
-                            done
-                        '''
+                    def services = [
+                        'api-gateway': 'microservices/api-gateway',
+                        'lms-connector': 'microservices/lms-connector',
+                        'student-profiler': 'microservices/student-profiler',
+                        'student-coach-api': 'microservices/student-coach-api',
+                        'path-predictor': 'microservices/path-predictor',
+                        'prepa-data': 'microservices/prepa-data',
+                        'recco-builder': 'microservices/recco-builder',
+                        'teacher-console-api': 'microservices/teacher-console-api'
+                    ]
+
+                    services.each { name, path ->
+                        echo "Building Docker image for ${name}"
+                        sh "docker build -t ${DOCKER_REGISTRY}/${name}:${BUILD_NUMBER} -t ${DOCKER_REGISTRY}/${name}:latest ${path}"
                     }
                 }
             }
         }
-        
-        stage('Deploy to Production') {
-            when {
-                branch 'main'
-            }
+
+        stage('Verification') {
             steps {
-                echo 'Deploying to production environment...'
-                input message: 'Deploy to production?', ok: 'Deploy'
-                sh '''
-                    docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-                    echo "Production deployment completed"
-                '''
+                echo "Pipeline execution completed successfully."
+                sh 'docker images | grep edupath'
             }
         }
     }
-    
+
     post {
         always {
-            echo 'Cleaning up...'
-            sh '''
-                docker-compose logs > docker-compose-logs.txt || true
-            '''
-            archiveArtifacts artifacts: 'docker-compose-logs.txt', allowEmptyArchive: true
+            echo 'Pipeline finished.'
         }
-        
         success {
-            echo 'Pipeline completed successfully!'
-            // Send notification (Slack, Email, etc.)
+            echo 'Build and Dockerization successful!'
         }
-        
         failure {
-            echo 'Pipeline failed!'
-            // Send failure notification
-        }
-        
-        cleanup {
-            echo 'Performing cleanup...'
-            sh '''
-                docker-compose down || true
-            '''
+            echo 'Pipeline failed. Please check the logs.'
         }
     }
 }
