@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir \
+RUN pip install --default-timeout=1000 --retries=10 --no-cache-dir \
     apache-airflow==2.6.3 \
     pandas \
     scikit-learn \

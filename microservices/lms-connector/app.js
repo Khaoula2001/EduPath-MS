@@ -57,7 +57,7 @@ app.post('/sync/moodle', async (req, res) => {
     });
     await saveRawData('MOODLE', 'student_info', usersResponse.data);
 
-    res.json({ 
+    res.json({
       message: 'Données synchronisées avec succès',
       details: {
         assessments: gradesResponse.data ? 'OK' : 'Empty',

@@ -7,20 +7,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Upgrade pip
-RUN pip install --no-cache-dir --upgrade pip
+# Upgrade pip first
+RUN pip install --default-timeout=1000 --retries=10 --no-cache-dir --upgrade pip
 
-# Install PyTorch CPU first (Much faster and lighter than the default GPU version)
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+# Install PyTorch CPU (largest dependency - cache this layer)
+# Using specific version to ensure cache stability
+RUN pip install --default-timeout=1000 --retries=10 --no-cache-dir \
+    torch==2.1.0 --index-url https://download.pytorch.org/whl/cpu
 
-# Copy requirements and install the rest
+# Copy ONLY requirements.txt first for better caching
 COPY requirements.txt .
+
+# Install other Python dependencies (will be cached if requirements.txt doesn't change)
 RUN pip install --default-timeout=1000 --retries=10 --no-cache-dir -r requirements.txt
 
-# Pre-download the BERT model
+# Pre-download the BERT model (cache this layer too)
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 
-# Copy the application code
+# Copy the application code (this changes frequently, so it's last)
 COPY . .
 
 EXPOSE 8003
