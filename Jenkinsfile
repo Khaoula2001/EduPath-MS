@@ -75,7 +75,7 @@ pipeline {
             echo '=== Pipeline Finished: Cleaning Up ==='
             script {
                 // Remove containers and networks to avoid conflicts with future commits/runs
-                bat "docker-compose -p edupath-ms down --remove-orphans || true"
+//                 bat "docker-compose -p edupath-ms down --remove-orphans || true"
             }
         }
         success {
