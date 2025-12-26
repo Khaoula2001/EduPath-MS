@@ -344,6 +344,10 @@ services:
       - reco-builder
       - teacher-console-api
       - student-coach-api
+    environment:
+      - PROFILER_URL=http://student-profiler:8000
+      - RECCO_URL=http://reco-builder:8003
+      - COACH_API_URL=http://student-coach-api:8005
     ports:
       - "4000:4000"
 

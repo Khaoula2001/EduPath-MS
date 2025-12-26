@@ -1,9 +1,48 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../services/student_service.dart';
 import 'login_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final StudentService _studentService = StudentService();
+  Map<String, dynamic>? _stats;
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      final studentId = AuthService.currentUser?.id ?? '1';
+      final stats = await _studentService.getMyStats(studentId);
+      
+      setState(() {
+        _stats = stats;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
 
   void _handleLogout(BuildContext context) {
     AuthService().logout();
@@ -15,6 +54,22 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Erreur: $_errorMessage', style: const TextStyle(color: Colors.red)),
+            ElevatedButton(onPressed: _loadStats, child: const Text('Réessayer')),
+          ],
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -54,7 +109,9 @@ class ProfileScreen extends StatelessWidget {
           ),
           child: Center(
             child: Text(
-              user?.username.substring(0, 2).toUpperCase() ?? 'AD',
+              user != null && user.username.isNotEmpty
+                  ? user.username.substring(0, user.username.length >= 2 ? 2 : 1).toUpperCase()
+                  : 'AD',
               style: const TextStyle(
                 fontSize: 32,
                 color: Colors.white,
@@ -104,25 +161,25 @@ class ProfileScreen extends StatelessWidget {
         _buildStatCard(
           icon: Icons.access_time_filled,
           iconColor: Colors.blue,
-          value: '12h',
+          value: _stats?['hours_studied'] ?? '0h',
           label: 'Hours Studied',
         ),
         _buildStatCard(
           icon: Icons.emoji_events,
           iconColor: Colors.purple,
-          value: '8/10',
+          value: _stats?['quizzes_completed'] ?? '0/0',
           label: 'Quizzes',
         ),
         _buildStatCard(
           icon: Icons.local_fire_department,
           iconColor: Colors.orange,
-          value: '5 days',
+          value: _stats?['current_streak'] ?? '0 days',
           label: 'Current Streak',
         ),
         _buildStatCard(
           icon: Icons.check_circle,
           iconColor: Colors.green,
-          value: '4 Modules',
+          value: _stats?['completion_rate'] ?? '0%',
           label: 'Completion',
         ),
       ],

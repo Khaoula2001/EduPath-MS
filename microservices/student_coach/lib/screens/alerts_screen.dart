@@ -1,7 +1,48 @@
 import 'package:flutter/material.dart';
+import '../services/student_service.dart';
+import '../services/auth_service.dart';
+import '../models/student_profile.dart';
 
-class AlertsScreen extends StatelessWidget {
+class AlertsScreen extends StatefulWidget {
   const AlertsScreen({super.key});
+
+  @override
+  State<AlertsScreen> createState() => _AlertsScreenState();
+}
+
+class _AlertsScreenState extends State<AlertsScreen> {
+  final StudentService _studentService = StudentService();
+  List<Activity> _alerts = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAlerts();
+  }
+
+  Future<void> _loadAlerts() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      final studentId = AuthService.currentUser?.id ?? '1';
+      final profile = await _studentService.getMyProfile(studentId);
+      
+      setState(() {
+        _alerts = profile.recentActivities;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,36 +68,27 @@ class AlertsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          _buildAlertCard(
-            icon: Icons.error_outline,
-            color: const Color(0xFFFF6B6B),
-            title: 'Drop in regularity detected',
-            description: 'Your study sessions have decreased by 30% this week compared to last week.',
-          ),
-          _buildAlertCard(
-            icon: Icons.trending_up,
-            color: const Color(0xFF51CF66),
-            title: 'Performance peak identified',
-            description: 'You perform best between 2-4 PM. Consider scheduling difficult topics during this time.',
-          ),
-          _buildAlertCard(
-            icon: Icons.info_outline,
-            color: const Color(0xFF339AF0),
-            title: 'Weekly summary available',
-            description: 'Your weekly analytics report is ready. Check your progress and insights.',
-          ),
-          _buildAlertCard(
-            icon: Icons.warning_amber_outlined,
-            color: const Color(0xFFFCC419),
-            title: 'Quiz deadline approaching',
-            description: 'Physics quiz due in 2 days. You have 3 recommended resources to review.',
-          ),
-          _buildAlertCard(
-            icon: Icons.trending_up,
-            color: const Color(0xFF51CF66),
-            title: 'Streak milestone reached',
-            description: 'Congratulations! You\'ve maintained a 7-day study streak. Keep it going!',
-          ),
+          
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else if (_errorMessage != null)
+            Center(
+              child: Column(
+                children: [
+                  Text('Erreur: $_errorMessage', style: const TextStyle(color: Colors.red)),
+                  ElevatedButton(onPressed: _loadAlerts, child: const Text('Réessayer')),
+                ],
+              ),
+            )
+          else if (_alerts.isEmpty)
+            const Center(child: Text('Aucune alerte pour le moment.'))
+          else
+            ..._alerts.map((alert) => _buildAlertCard(
+              icon: alert.type == 'alert' ? Icons.warning_amber_outlined : Icons.lightbulb_outline,
+              color: alert.type == 'alert' ? const Color(0xFFFF6B6B) : const Color(0xFF339AF0),
+              title: alert.title,
+              description: alert.message,
+            )).toList(),
         ],
       ),
     );

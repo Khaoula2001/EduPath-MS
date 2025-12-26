@@ -1,6 +1,7 @@
 const MoodleExtractorService = require('./moodle-extractor.service');
 const FeatureCalculatorService = require('./feature-calculator.service');
 const StudentFeaturesRepository = require('../repositories/student-features.repository');
+const MessengerService = require('./messenger.service');
 
 class SyncOrchestratorService {
   constructor() {
@@ -64,6 +65,14 @@ class SyncOrchestratorService {
     };
 
     await this.repo.saveStudentFeatures(features);
+
+    // Notify other services via RabbitMQ
+    await MessengerService.publishUpdate({
+      studentId: studentId,
+      courseId: courseId,
+      timestamp: new Date().toISOString()
+    });
+
     return features;
   }
 

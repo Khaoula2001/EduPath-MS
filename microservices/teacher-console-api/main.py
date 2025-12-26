@@ -4,6 +4,14 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
+import pika
+import json
+import threading
+import time
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="TeacherConsole API")
 
@@ -20,6 +28,14 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# RabbitMQ Configuration
+RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'rabbitmq')
+RABBITMQ_USER = os.getenv('RABBITMQ_USER', 'edupath')
+RABBITMQ_PASS = os.getenv('RABBITMQ_PASS', 'edupath')
+
+# In-memory alert storage (in production, use database)
+teacher_alerts = []
 
 @app.get("/")
 def read_root():
@@ -76,6 +92,11 @@ def get_alerts(db: Session = Depends(get_db)):
     ]
     return alerts
 
+@app.get("/alerts/realtime")
+def get_realtime_alerts():
+    """Get alerts received from RabbitMQ"""
+    return teacher_alerts[-20:]  # Return last 20 alerts
+
 @app.get("/stats")
 def get_stats(db: Session = Depends(get_db)):
     return {
@@ -128,3 +149,65 @@ def get_risk_heatmap(db: Session = Depends(get_db)):
         {"name": "Anas Moussaoui", "riskLevel": "critical", "riskScore": 92},
         {"name": "Karim Teral", "riskLevel": "medium", "riskScore": 55},
     ]
+
+# ========== RabbitMQ Consumer for Alerts ==========
+
+def process_alert(ch, method, properties, body):
+    """Process incoming alerts from RabbitMQ"""
+    try:
+        data = json.loads(body)
+        logger.info(f" [x] Received alert: {data}")
+        
+        # Add to in-memory alerts
+        alert = {
+            "id": len(teacher_alerts) + 1,
+            "student_id": data.get('studentId'),
+            "student_name": f"Student {data.get('studentId')}",
+            "type": data.get('type', 'Performance'),
+            "message": data.get('message', 'Alert triggered'),
+            "priority": "Urgent" if data.get('riskLevel') == 'High' else "Moyen",
+            "date": str(data.get('timestamp', ''))[:10],
+            "risk_level": data.get('riskLevel', 'Unknown')
+        }
+        teacher_alerts.append(alert)
+        logger.info(f" [✓] Alert stored for student {data.get('studentId')}")
+        
+    except Exception as e:
+        logger.error(f" [!] Error processing alert: {e}")
+
+def start_consumer():
+    """Start RabbitMQ consumer for teacher alerts"""
+    while True:
+        try:
+            logger.info(f" [*] Connecting to RabbitMQ at {RABBITMQ_HOST}...")
+            credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)
+            connection = pika.BlockingConnection(
+                pika.ConnectionParameters(host=RABBITMQ_HOST, credentials=credentials)
+            )
+            channel = connection.channel()
+
+            # Listen to multiple queues
+            channel.queue_declare(queue='student_alerts', durable=True)
+            channel.queue_declare(queue='profile_updated', durable=True)
+
+            channel.basic_consume(
+                queue='student_alerts',
+                on_message_callback=process_alert,
+                auto_ack=True
+            )
+            channel.basic_consume(
+                queue='profile_updated',
+                on_message_callback=process_alert,
+                auto_ack=True
+            )
+
+            logger.info(' [*] TeacherConsole Consumer waiting for alerts...')
+            channel.start_consuming()
+            
+        except Exception as e:
+            logger.error(f" [!] RabbitMQ connection error: {e}. Retrying in 5s...")
+            time.sleep(5)
+
+# Start consumer in background thread
+consumer_thread = threading.Thread(target=start_consumer, daemon=True)
+consumer_thread.start()

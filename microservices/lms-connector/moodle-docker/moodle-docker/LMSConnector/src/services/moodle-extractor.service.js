@@ -57,7 +57,7 @@ class MoodleExtractorService {
   async getUserProfile(studentId) {
     const pool = await this.poolPromise;
     const sql = `
-      SELECT id AS id_student, gender, country AS region, age FROM mdl_user WHERE id = ?;
+      SELECT id AS id_student, country AS region FROM mdl_user WHERE id = ?;
     `;
     const [rows] = await pool.query(sql, [studentId]);
     return rows[0] || null;

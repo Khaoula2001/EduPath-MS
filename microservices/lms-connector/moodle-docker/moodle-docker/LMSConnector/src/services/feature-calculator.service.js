@@ -1,13 +1,13 @@
 class FeatureCalculatorService {
   calculateEngagementMetrics(logs = []) {
     const activityCount = logs.length;
-    const totalClicks = logs.filter(l => l.action === 'view' || l.action === 'clicked').length;
+    const totalClicks = logs.filter(l => l.action === 'view' || l.action === 'viewed' || l.action === 'clicked').length;
     const firstActivityDay = logs.length ? new Date(logs[0].timecreated * 1000) : null;
     const lastActivityDay = logs.length ? new Date(logs[logs.length - 1].timecreated * 1000) : null;
 
     const days = new Map();
     logs.forEach(l => {
-      const d = new Date(l.timecreated * 1000).toISOString().slice(0,10);
+      const d = new Date(l.timecreated * 1000).toISOString().slice(0, 10);
       days.set(d, (days.get(d) || 0) + 1);
     });
     const activeDays = days.size;
@@ -18,7 +18,7 @@ class FeatureCalculatorService {
     const clickStd = 0; // simple placeholder, real calc requires per-activity clicks
 
     const studyDuration = firstActivityDay && lastActivityDay
-      ? Math.ceil((lastActivityDay - firstActivityDay) / (1000*60*60*24))
+      ? Math.ceil((lastActivityDay - firstActivityDay) / (1000 * 60 * 60 * 24))
       : 0;
 
     const engagementIntensity = activityCount ? totalClicks / Math.max(studyDuration, 1) : 0;
@@ -48,10 +48,10 @@ class FeatureCalculatorService {
     if (!grades.length) return { mean_score: null, score_std: null, latest_assessment_score: null };
     const vals = grades.map(g => Number(g.finalgrade || g.rawgrade || 0)).filter(v => !isNaN(v));
     if (!vals.length) return { mean_score: null, score_std: null, latest_assessment_score: null };
-    const mean = vals.reduce((a,b)=>a+b,0) / vals.length;
-    const variance = vals.reduce((a,b)=>a + Math.pow(b-mean,2), 0) / vals.length;
+    const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+    const variance = vals.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / vals.length;
     const std = Math.sqrt(variance);
-    const latest = grades.sort((a,b) => (a.timemodified||0) - (b.timemodified||0)).slice(-1)[0];
+    const latest = grades.sort((a, b) => (a.timemodified || 0) - (b.timemodified || 0)).slice(-1)[0];
     const latestScore = latest ? (latest.finalgrade || latest.rawgrade || null) : null;
     return { mean_score: Number(mean.toFixed(2)), score_std: Number(std.toFixed(2)), latest_assessment_score: latestScore };
   }

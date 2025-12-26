@@ -24,17 +24,31 @@ def predict_clusters(features: StudentFeatures, db: Session = Depends(get_db)):
         logger.error(f"Internal Server Error: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error during prediction.")
 
+from app.models.domain import StudentProfile
+
 @router.get("/profile/{student_id}")
 def get_student_profile(student_id: str, db: Session = Depends(get_db)):
     """
-    Retrieves the profile for a specific student.
+    Retrieves the profile for a specific student from the database.
     """
-    # This is a mock implementation. In a real scenario, you would query the database.
-    # For now, we return mock data to satisfy the path-predictor service.
+    profile = db.query(StudentProfile).filter(StudentProfile.student_id == student_id).first()
+    
+    if profile:
+        return {
+            "student_id": profile.student_id,
+            "mean_score": profile.mean_score,
+            "progress_rate": profile.progress_rate,
+            "cluster_id": profile.cluster_id,
+            "profile_name": profile.profil_type,
+            "risk_level": profile.risk_level
+        }
+    
+    # Fallback for unknown students (or those not yet analyzed)
     return {
         "student_id": student_id,
-        "mean_score": 75.5,
-        "progress_rate": 0.65,
-        "cluster_id": 2,
-        "profile_name": "Balanced"
+        "mean_score": 0.0,
+        "progress_rate": 0.0,
+        "cluster_id": -1,
+        "profile_name": "Non démarré (Not Started)",
+        "risk_level": "High"
     }

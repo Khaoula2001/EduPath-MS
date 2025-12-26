@@ -45,14 +45,23 @@ services:
     build: ./LMSConnector
     container_name: lmsconnector
     ports:
-      - "3000:3000"
+      - "3005:3000"
     environment:
       MOODLE_API_URL: http://moodleapp/webservice/rest/server.php
-      MOODLE_TOKEN: 340fe84eeed17856a8bad6c59d2c87ed
+      MOODLE_TOKEN: 8d6643a2976ec5d0434e66632a6161b1
       DB_HOST: lmsdb
       DB_NAME: lmsconnector
       DB_USER: lms
       DB_PASSWORD: lmspass
+      # MySQL Connection for Seeding
+      MYSQL_HOST: clouddb
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    networks:
+      - default
+      - edupath_net
     depends_on:
       - moodleapp
       - lmsdb
@@ -72,6 +81,16 @@ services:
       - ./LMSConnector/sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
       - "5433:5432"
+    networks:
+      - default
+      - edupath_net
+
+networks:
+  default:
+    name: moodle-docker_default
+  edupath_net:
+    external: true
+    name: edupath-ms_default
 
 volumes:
   clouddbdata:
