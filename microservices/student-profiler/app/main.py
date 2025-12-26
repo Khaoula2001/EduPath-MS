@@ -18,6 +18,8 @@ try:
 except Exception as e:
     logging.error(f"Could not create database tables: {e}")
 
+app = FastAPI(
+    title="Student Profiler",
     version="1.0.0"
 )
 

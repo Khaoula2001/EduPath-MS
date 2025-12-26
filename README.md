@@ -62,7 +62,7 @@ The project is built on a **secure, event-driven microservices architecture**, f
 | **API Gateway** | Node.js / Express (REST) | `4000` | Unified entry point, JWT auth, Socket.io, and routing. |
 | **Eureka Server** | Java / Spring Boot | `8761` | Service Registry & Discovery. |
 | **LMS Connector** | Node.js / Express | `3001` | Connects to Moodle API to fetch raw data. |
-| **PrepaData** | Python / FastAPI / Airflow | `8001` | ETL pipelines & batch processing (Airflow UI: `8081`). |
+| **PrepaData** | Python / FastAPI / Airflow | `N/A` | ETL pipelines managed by Airflow (UI: `8081`). |
 | **Student Profiler** | Python / FastAPI | `8000` | ML Service for student behavioral clustering. |
 | **Path Predictor** | Python / FastAPI | `8002` | ML Service for dropout risk prediction (XGBoost). |
 | **Reco Builder** | Python / FastAPI | `8003` | ML Service for personalized content recommendations. |
@@ -71,12 +71,17 @@ The project is built on a **secure, event-driven microservices architecture**, f
 | **Teacher Console** | Angular | `8088` | Responsive Web Dashboard for instructors. |
 | **Student Coach** | Flutter | N/A | Cross-platform mobile application for students. |
 
-### Infrastructure Services
-*   **PostgreSQL**: Primary transactional database (per-service schemas).
-*   **RabbitMQ**: Message broker for inter-service communication.
-*   **MinIO**: Object storage (S3 compatible) for resource files.
-*   **Elasticsearch**: Log aggregation and search engine.
-*   **MLflow**: Model registry and experiment tracking.
+### Infrastructure & Tools
+
+| Service | Type | Port / UI | Description |
+| :--- | :--- | :--- | :--- |
+| **PostgreSQL** | Database | `5432` | Primary transactional database (per-service schemas). |
+| **RabbitMQ** | Message Broker | `5672` (AMQP) <br> `15672` (UI) | Asynchronous messaging for alerts and events. |
+| **MinIO** | Object Storage | `9999` (API) <br> `9998` (UI) | S3-compatible storage for artifacts and datasets. |
+| **Elasticsearch** | Search Engine | `9200` | Log aggregation and full-text search. |
+| **MLflow** | MLOps | `5000` (UI) | Model registry and experiment tracking. |
+| **phpMyAdmin** | Database UI | `8082` (UI) | Web interface for managing Moodle MySQL database. |
+| **Moodle** | LMS | `80` | Learning Management System instance. |
 
 ---
 
@@ -109,10 +114,14 @@ The project is built on a **secure, event-driven microservices architecture**, f
 
 ### Access Points
 
-*   **Service Registry**: [http://localhost:8761](http://localhost:8761)
+*   **Service Registry (Eureka)**: [http://localhost:8761](http://localhost:8761)
 *   **API Gateway**: [http://localhost:4000](http://localhost:4000)
 *   **Teacher Console**: [http://localhost:8088](http://localhost:8088)
 *   **Airflow UI**: [http://localhost:8081](http://localhost:8081)
+*   **RabbitMQ Management**: [http://localhost:15672](http://localhost:15672) (User/Pass: `edupath`/`edupath`)
+*   **MinIO Console**: [http://localhost:9998](http://localhost:9998)
+*   **MLflow UI**: [http://localhost:5000](http://localhost:5000)
+*   **phpMyAdmin**: [http://localhost:8082](http://localhost:8082)
 *   **Moodle LMS**: [http://localhost:80](http://localhost:80)
 
 ---

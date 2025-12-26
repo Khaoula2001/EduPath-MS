@@ -6,6 +6,8 @@ pipeline {
 
     environment {
         DOCKER_REGISTRY = 'edupath'
+        // Assumes SonarQube is running from docker-compose
+        SONAR_HOST_URL = 'http://localhost:9000' 
     }
 
     stages {
@@ -19,8 +21,12 @@ pipeline {
             steps {
                 script {
                     echo "=== Starting Base Infrastructure ==="
-                    // Start PostgreSQL, RabbitMQ, MLFlow, Elasticsearch, MinIO, MoodleDB, LMSDB
-                    bat "docker-compose -p edupath-ms up -d postgres rabbitmq mlflow elasticsearch minio moodledb lmsdb"
+                    // Start PostgreSQL, RabbitMQ, MLFlow, Elasticsearch, MinIO, MoodleDB, LMSDB, and SonarQube
+                    bat "docker-compose -p edupath-ms up -d postgres rabbitmq mlflow elasticsearch minio moodledb lmsdb sonarqube"
+                    
+                    // Wait for SonarQube to be ready (rudimentary check)
+                    echo "Waiting for SonarQube to start..."
+                    sleep 30
                 }
             }
         }
@@ -30,6 +36,17 @@ pipeline {
                 
                 stage('Eureka Server') {
                     stages {
+                        stage('Analysis Eureka') {
+                            steps {
+                                dir('microservices/eureka-server') {
+                                    script {
+                                        echo "Running SonarQube Analysis for Eureka Server..."
+                                        // Java project uses Maven
+                                        bat "mvn clean verify sonar:sonar -Dsonar.projectKey=eureka-server -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.login=admin -Dsonar.password=admin -DskipTests"
+                                    }
+                                }
+                            }
+                        }
                         stage('Build Eureka') {
                             steps {
                                 dir('microservices/eureka-server') {
@@ -53,6 +70,22 @@ pipeline {
 
                 stage('API Gateway') {
                     stages {
+                        stage('Analysis Gateway') {
+                            steps {
+                                dir('microservices/api-gateway') {
+                                    script {
+                                        echo "Running Analysis for API Gateway..."
+                                        // Node.js project - using Dockerized Scanner
+                                        // Note: We use host networking or point to host IP if needed.
+                                        // For simplicity, assuming Jenkins runs on host and 'localhost' in container points to host if we use --network host (Linux) 
+                                        // OR we use the service name if we attach to the network.
+                                        // Let's attach to the network 'edupath-ms_default' (created by compose)
+                                        // Network name is projectname_default -> edupath-ms_default
+                                        bat "docker run --rm --network edupath-ms_default -v %CD%:/usr/src -w /usr/src sonarsource/sonar-scanner-cli -Dsonar.projectKey=api-gateway -Dsonar.sources=. -Dsonar.host.url=http://sonarqube:9000 -Dsonar.login=admin -Dsonar.password=admin"
+                                    }
+                                }
+                            }
+                        }
                         stage('Build Gateway') {
                             steps {
                                 dir('microservices/api-gateway') {
@@ -76,6 +109,16 @@ pipeline {
 
                 stage('LMS Connector') {
                     stages {
+                        stage('Analysis LMS') {
+                            steps {
+                                dir('microservices/lms-connector') {
+                                    script {
+                                        echo "Running Analysis for LMS Connector..."
+                                        bat "docker run --rm --network edupath-ms_default -v %CD%:/usr/src -w /usr/src sonarsource/sonar-scanner-cli -Dsonar.projectKey=lms-connector -Dsonar.sources=. -Dsonar.host.url=http://sonarqube:9000 -Dsonar.login=admin -Dsonar.password=admin"
+                                    }
+                                }
+                            }
+                        }
                         stage('Build LMS Connector') {
                             steps {
                                 dir('microservices/lms-connector') {
@@ -99,6 +142,16 @@ pipeline {
 
                 stage('Student Profiler') {
                     stages {
+                        stage('Analysis Profiler') {
+                            steps {
+                                dir('microservices/student-profiler') {
+                                    script {
+                                        echo "Running Analysis for Student Profiler..."
+                                        bat "docker run --rm --network edupath-ms_default -v %CD%:/usr/src -w /usr/src sonarsource/sonar-scanner-cli -Dsonar.projectKey=student-profiler -Dsonar.sources=. -Dsonar.host.url=http://sonarqube:9000 -Dsonar.login=admin -Dsonar.password=admin"
+                                    }
+                                }
+                            }
+                        }
                         stage('Build Profiler') {
                             steps {
                                 dir('microservices/student-profiler') {
@@ -122,6 +175,16 @@ pipeline {
 
                 stage('Student Coach API') {
                     stages {
+                        stage('Analysis Coach') {
+                            steps {
+                                dir('microservices/student-coach-api') {
+                                    script {
+                                        echo "Running Analysis for Student Coach API..."
+                                        bat "docker run --rm --network edupath-ms_default -v %CD%:/usr/src -w /usr/src sonarsource/sonar-scanner-cli -Dsonar.projectKey=student-coach-api -Dsonar.sources=. -Dsonar.host.url=http://sonarqube:9000 -Dsonar.login=admin -Dsonar.password=admin"
+                                    }
+                                }
+                            }
+                        }
                         stage('Build Coach API') {
                             steps {
                                 dir('microservices/student-coach-api') {
@@ -145,6 +208,16 @@ pipeline {
 
                 stage('Path Predictor') {
                     stages {
+                        stage('Analysis Predictor') {
+                            steps {
+                                dir('microservices/path-predictor') {
+                                    script {
+                                        echo "Running Analysis for Path Predictor..."
+                                        bat "docker run --rm --network edupath-ms_default -v %CD%:/usr/src -w /usr/src sonarsource/sonar-scanner-cli -Dsonar.projectKey=path-predictor -Dsonar.sources=. -Dsonar.host.url=http://sonarqube:9000 -Dsonar.login=admin -Dsonar.password=admin"
+                                    }
+                                }
+                            }
+                        }
                         stage('Build Predictor') {
                             steps {
                                 dir('microservices/path-predictor') {
@@ -168,6 +241,16 @@ pipeline {
 
                 stage('Prepa Data') {
                     stages {
+                        stage('Analysis PrepaData') {
+                            steps {
+                                dir('microservices/prepa-data') {
+                                    script {
+                                        echo "Running Analysis for Prepa Data..."
+                                        bat "docker run --rm --network edupath-ms_default -v %CD%:/usr/src -w /usr/src sonarsource/sonar-scanner-cli -Dsonar.projectKey=prepa-data -Dsonar.sources=. -Dsonar.host.url=http://sonarqube:9000 -Dsonar.login=admin -Dsonar.password=admin"
+                                    }
+                                }
+                            }
+                        }
                         stage('Build PrepaData') {
                             steps {
                                 dir('microservices/prepa-data') {
@@ -191,9 +274,19 @@ pipeline {
 
                 stage('Reco Builder') {
                     stages {
+                        stage('Analysis Reco') {
+                            steps {
+                                dir('microservices/reco-builder') {
+                                    script {
+                                        echo "Running Analysis for Reco Builder..."
+                                        bat "docker run --rm --network edupath-ms_default -v %CD%:/usr/src -w /usr/src sonarsource/sonar-scanner-cli -Dsonar.projectKey=reco-builder -Dsonar.sources=. -Dsonar.host.url=http://sonarqube:9000 -Dsonar.login=admin -Dsonar.password=admin"
+                                    }
+                                }
+                            }
+                        }
                         stage('Build Reco') {
                             steps {
-                                dir('microservices/reco-builder') { // Corrected folder name based on recent file changes
+                                dir('microservices/reco-builder') { 
                                     script {
                                         echo "Building Reco Builder..."
                                         bat "docker build -t ${DOCKER_REGISTRY}/reco-builder:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/reco-builder:latest ."
@@ -214,6 +307,16 @@ pipeline {
 
                 stage('Teacher Console API') {
                     stages {
+                        stage('Analysis TC API') {
+                            steps {
+                                dir('microservices/teacher-console-api') {
+                                    script {
+                                        echo "Running Analysis for Teacher Console API..."
+                                        bat "docker run --rm --network edupath-ms_default -v %CD%:/usr/src -w /usr/src sonarsource/sonar-scanner-cli -Dsonar.projectKey=teacher-console-api -Dsonar.sources=. -Dsonar.host.url=http://sonarqube:9000 -Dsonar.login=admin -Dsonar.password=admin"
+                                    }
+                                }
+                            }
+                        }
                         stage('Build TC API') {
                             steps {
                                 dir('microservices/teacher-console-api') {
@@ -237,6 +340,16 @@ pipeline {
 
                 stage('Teacher Console (Web)') {
                     stages {
+                        stage('Analysis TC Web') {
+                            steps {
+                                dir('microservices/TeacherConsole') {
+                                    script {
+                                        echo "Running Analysis for Teacher Console Web..."
+                                        bat "docker run --rm --network edupath-ms_default -v %CD%:/usr/src -w /usr/src sonarsource/sonar-scanner-cli -Dsonar.projectKey=teacher-console-web -Dsonar.sources=. -Dsonar.host.url=http://sonarqube:9000 -Dsonar.login=admin -Dsonar.password=admin"
+                                    }
+                                }
+                            }
+                        }
                         stage('Build TC Web') {
                             steps {
                                 dir('microservices/TeacherConsole') {
@@ -265,8 +378,7 @@ pipeline {
                                 dir('microservices/student_coach/android') {
                                     script {
                                         echo "Building Android APK..."
-                                        // Using gradlew.bat for Windows
-                                        bat 'gradlew.bat assembleDebug'
+                                        bat "docker run --rm -v %CD%:/project -w /project cimg/android:2024.01 bash -c \"gradle assembleDebug\""
                                     }
                                 }
                             }
