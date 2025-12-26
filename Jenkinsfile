@@ -35,7 +35,7 @@ pipeline {
             }
         }
 
-        stage('Microservices & Frontend') {
+        stage('Backend Microservices') {
             parallel {
                 
                 stage('Eureka Server') {
@@ -245,9 +245,15 @@ pipeline {
                     }
                 }
 
-                stage('Teacher Console (Web)') {
+            }
+        }
+
+        stage('Client Applications') {
+            parallel {
+
+                stage('Teacher Console') {
                     stages {
-                        stage('Build TC Web') {
+                        stage('Build Teacher Console') {
                             steps {
                                 dir('microservices/TeacherConsole') {
                                     script {
@@ -257,7 +263,7 @@ pipeline {
                                 }
                             }
                         }
-                        stage('Deploy TC Web') {
+                        stage('Deploy Teacher Console') {
                             steps {
                                 script {
                                     echo "Deploying TeacherConsole (Frontend)..."
@@ -268,15 +274,17 @@ pipeline {
                     }
                 }
 
-                stage('Mobile Front') {
+                stage('Student Coach') {
                     stages {
-                        stage('Build APK') {
+                        stage('Build Student Coach') {
                             steps {
                                 dir('microservices/student_coach/android') {
                                     script {
                                         echo "Building Android APK..."
                                         bat "docker run --rm -v %CD%:/project -w /project cimg/android:2024.01 bash -c \"gradle assembleDebug\""
                                     }
+                                    echo "Archiving APK..."
+                                    archiveArtifacts artifacts: '**/app-debug.apk', fingerprint: true, onlyIfSuccessful: true
                                 }
                             }
                         }
@@ -302,6 +310,14 @@ pipeline {
         }
         success {
             echo 'SUCCESS: All microservices and mobile front built.'
+            echo '=== Access Links ==='
+            echo 'Teacher Console: http://localhost:8088'
+            echo 'Moodle: http://localhost'
+            echo 'Eureka: http://localhost:8761'
+            echo 'Airflow: http://localhost:8081'
+            echo 'MLFlow: http://localhost:5001'
+            echo 'MinIO: http://localhost:9002'
+            echo 'App Gateway: http://localhost:4000'
         }
         failure {
             echo 'FAILURE: One or more stages failed.'

@@ -11,7 +11,7 @@ services:
       POSTGRES_USER: prepadata
       POSTGRES_PASSWORD: prepadata_pwd
       POSTGRES_DB: prepadata_db
-      POSTGRES_MULTIPLE_DATABASES: "profiler_db,predictor_db"
+      POSTGRES_MULTIPLE_DATABASES: "profiler_db,predictor_db,mlflow_db"
     ports:
       - "5432:5432"
     volumes:
@@ -68,10 +68,12 @@ services:
       - minio
       - postgres
     command: >
+      bash -c "
+      pip install --no-cache-dir psycopg2-binary &&
       mlflow server
       --backend-store-uri postgresql://prepadata:prepadata_pwd@postgres:5432/mlflow_db
       --default-artifact-root s3://mlflow/
-      --host 0.0.0.0
+      --host 0.0.0.0"
 
   # ==========================================
   # ELASTICSEARCH (For Data Indexing)
@@ -82,10 +84,15 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ports:
       - "9200:9200"
     volumes:
       - es_data:/usr/share/elasticsearch/data
+    deploy:
+      resources:
+        limits:
+          memory: 1g
 
   # ==========================================
   # AIRFLOW (Orchestrator)
