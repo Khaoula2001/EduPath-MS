@@ -15,32 +15,78 @@ pipeline {
             }
         }
         stage('Build & Tag Docker Images') {
-            steps {
-                script {
-                    def services = [
-                        'api-gateway': 'microservices/api-gateway',
-                        'lms-connector': 'microservices/lms-connector',
-                        'student-profiler': 'microservices/student-profiler',
-                        'student-coach-api': 'microservices/student-coach-api',
-                        'path-predictor': 'microservices/path-predictor',
-                        'prepa-data': 'microservices/prepa-data',
-                        'recco-builder': 'microservices/recco-builder',
-                        'teacher-console-api': 'microservices/teacher-console-api',
-                        'teacher-console': 'microservices/TeacherConsole'
-                    ]
-
-                    def stages = [:]
-
-                    services.each { name, path ->
-                        stages["Build ${name}"] = {
-                            dir(path) {
-                                echo "Building Docker image for ${name}"
-                                bat "docker build -t ${DOCKER_REGISTRY}/${name}:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/${name}:latest ."
-                            }
+            parallel {
+                stage('api-gateway') {
+                    steps {
+                        dir('microservices/api-gateway') {
+                            echo "Building Docker image for api-gateway"
+                            bat "docker build -t ${DOCKER_REGISTRY}/api-gateway:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/api-gateway:latest ."
                         }
                     }
-
-                    parallel stages
+                }
+                stage('lms-connector') {
+                    steps {
+                        dir('microservices/lms-connector') {
+                            echo "Building Docker image for lms-connector"
+                            bat "docker build -t ${DOCKER_REGISTRY}/lms-connector:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/lms-connector:latest ."
+                        }
+                    }
+                }
+                stage('student-profiler') {
+                    steps {
+                        dir('microservices/student-profiler') {
+                            echo "Building Docker image for student-profiler"
+                            bat "docker build -t ${DOCKER_REGISTRY}/student-profiler:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/student-profiler:latest ."
+                        }
+                    }
+                }
+                stage('student-coach-api') {
+                    steps {
+                        dir('microservices/student-coach-api') {
+                            echo "Building Docker image for student-coach-api"
+                            bat "docker build -t ${DOCKER_REGISTRY}/student-coach-api:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/student-coach-api:latest ."
+                        }
+                    }
+                }
+                stage('path-predictor') {
+                    steps {
+                        dir('microservices/path-predictor') {
+                            echo "Building Docker image for path-predictor"
+                            bat "docker build -t ${DOCKER_REGISTRY}/path-predictor:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/path-predictor:latest ."
+                        }
+                    }
+                }
+                stage('prepa-data') {
+                    steps {
+                        dir('microservices/prepa-data') {
+                            echo "Building Docker image for prepa-data"
+                            bat "docker build -t ${DOCKER_REGISTRY}/prepa-data:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/prepa-data:latest ."
+                        }
+                    }
+                }
+                stage('recco-builder') {
+                    steps {
+                        dir('microservices/recco-builder') {
+                            echo "Building Docker image for recco-builder"
+                            bat "docker build -t ${DOCKER_REGISTRY}/recco-builder:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/recco-builder:latest ."
+                        }
+                    }
+                }
+                stage('teacher-console-api') {
+                    steps {
+                        dir('microservices/teacher-console-api') {
+                            echo "Building Docker image for teacher-console-api"
+                            bat "docker build -t ${DOCKER_REGISTRY}/teacher-console-api:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/teacher-console-api:latest ."
+                        }
+                    }
+                }
+                stage('TeacherConsole') {
+                    steps {
+                        dir('microservices/TeacherConsole') {
+                            echo "Building Docker image for TeacherConsole"
+                            bat "docker build -t ${DOCKER_REGISTRY}/TeacherConsole:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/TeacherConsole:latest ."
+                        }
+                    }
                 }
             }
         }
