@@ -13,7 +13,18 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                script {
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: scm.branches,
+                        doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
+                        extensions: scm.extensions + [
+                            [$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true, timeout: 30],
+                            [$class: 'WipeWorkspace']
+                        ],
+                        userRemoteConfigs: scm.userRemoteConfigs
+                    ])
+                }
             }
         }
 
