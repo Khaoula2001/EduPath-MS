@@ -56,6 +56,11 @@ services:
     # Tweak for ElasticSearch mmap count
     # command: sysctl -w vm.max_map_count=262144 
     # Note: vm.max_map_count usually needs to be set on host.
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/api/system/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   # ==========================================
   # MLFLOW & MINIO
