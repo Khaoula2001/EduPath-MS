@@ -55,10 +55,16 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    echo "Starting deployment..."
-                    bat "docker-compose down || true"
-                    bat "docker-compose up -d --remove-orphans"
-                    echo "Deployment completed successfully."
+                    echo "=== Starting Automatic Deployment ==="
+                    // Use a fixed project name to avoid conflicts with fluctuating workspace folder names
+                    // Stop and remove existing containers, networks, and orphan services
+                    bat "docker-compose -p edupath-ms down --remove-orphans || true"
+                    
+                    echo "=== Deploying New Version ==="
+                    // Start services in detached mode with orphan removal
+                    bat "docker-compose -p edupath-ms up -d --remove-orphans"
+                    
+                    echo "=== Deployment Successful ==="
                 }
             }
         }

@@ -177,7 +177,6 @@ services:
     build:
       context: ./microservices/lms-connector/moodle-docker/moodle-docker
     image: moodleapp:1.0
-    container_name: moodleapp
     ports:
       - "80:80"
     volumes:
@@ -187,7 +186,6 @@ services:
 
   moodledb:
     image: mysql:8.4.5
-    container_name: clouddb
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
@@ -199,7 +197,6 @@ services:
 
   phpmyadmin:
     image: phpmyadmin
-    container_name: phpmyadmin
     restart: always
     ports:
       - "8082:80" # Changed to 8082 to avoid conflict with airflow-webserver
@@ -213,7 +210,6 @@ services:
 
   lmsdb:
     image: postgres:15
-    container_name: lmsdb_connector
     restart: always
     environment:
       POSTGRES_DB: lmsconnector
@@ -228,7 +224,6 @@ services:
   lms-connector:
     build:
       context: ./microservices/lms-connector/moodle-docker/moodle-docker/LMSConnector
-    container_name: lms_connector_service
 
     depends_on:
       - moodleapp
