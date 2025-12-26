@@ -158,7 +158,7 @@ pipeline {
                         script {
                             echo "=== Building TeacherConsole (Frontend) ==="
                             dir('microservices/TeacherConsole') {
-                                bat "docker build -t ${DOCKER_REGISTRY}/TeacherConsole:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/TeacherConsole:latest ."
+                                bat "docker build -t ${DOCKER_REGISTRY}/teacher-console:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/teacher-console:latest ."
                             }
                             echo "=== Deploying TeacherConsole ==="
                             bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate teacher-console"
