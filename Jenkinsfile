@@ -72,13 +72,17 @@ pipeline {
 
     post {
         always {
-            echo 'Pipeline finished.'
+            echo '=== Pipeline Finished: Cleaning Up ==='
+            script {
+                // Remove containers and networks to avoid conflicts with future commits/runs
+                bat "docker-compose -p edupath-ms down --remove-orphans || true"
+            }
         }
         success {
-            echo 'Build and Dockerization successful!'
+            echo 'Build, Dockerization, and Deployment verification successful!'
         }
         failure {
-            echo 'Pipeline failed. Please check the logs.'
+            echo 'Pipeline failed. Please check the logs for errors during build or deployment.'
         }
     }
 }
