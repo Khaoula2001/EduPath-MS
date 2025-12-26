@@ -3,6 +3,8 @@ from app.api import endpoints
 from app.core.database import engine, Base
 import logging
 import uvicorn
+import py_eureka_client.eureka_client as eureka_client
+import os
 
 # Initialize Logging
 logging.basicConfig(
@@ -16,11 +18,26 @@ try:
 except Exception as e:
     logging.error(f"Could not create database tables: {e}")
 
-app = FastAPI(
-    title="StudentProfiler Microservice",
-    description="API for analyzing student behavior and clustering profiles.",
     version="1.0.0"
 )
+
+# Eureka Configuration
+EUREKA_SERVER = os.getenv("EUREKA_SERVER", "http://eureka-server:8761/eureka")
+INSTANCE_HOST = os.getenv("INSTANCE_HOST", "student-profiler")
+INSTANCE_PORT = int(os.getenv("INSTANCE_PORT", "8000"))
+
+async def init_eureka():
+    await eureka_client.init_async(
+        eureka_server=EUREKA_SERVER,
+        app_name="student-profiler",
+        instance_port=INSTANCE_PORT,
+        instance_host=INSTANCE_HOST
+    )
+
+@app.on_event("startup")
+async def startup_event():
+    logging.info("Initializing Eureka client...")
+    await init_eureka()
 
 @app.get("/health")
 def health_check():

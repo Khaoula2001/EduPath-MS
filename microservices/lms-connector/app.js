@@ -2,6 +2,7 @@
 const express = require('express');
 const { Pool } = require('pg');
 const axios = require('axios');
+const Eureka = require('eureka-js-client').Eureka;
 
 const app = express();
 app.use(express.json());
@@ -76,4 +77,32 @@ app.get('/health', (req, res) => {
 
 app.listen(3000, () => {
   console.log('LMS Connector démarré sur le port 3000');
+
+  // Eureka Configuration
+  const client = new Eureka({
+    instance: {
+      app: 'lms-connector',
+      hostName: process.env.INSTANCE_HOST || 'lms-connector',
+      ipAddr: '127.0.0.1',
+      statusPageUrl: `http://${process.env.INSTANCE_HOST || 'lms-connector'}:3000/health`,
+      port: {
+        '$': 3000,
+        '@enabled': 'true',
+      },
+      vipAddress: 'lms-connector',
+      dataCenterInfo: {
+        '@class': 'com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo',
+        name: 'MyOwn',
+      },
+    },
+    eureka: {
+      host: process.env.EUREKA_HOST || 'eureka-server',
+      port: process.env.EUREKA_PORT || 8761,
+      servicePath: '/eureka/apps/',
+    },
+  });
+
+  client.start((error) => {
+    console.log(error || 'LMS Connector registered with Eureka');
+  });
 });

@@ -121,14 +121,35 @@ async function seedMoodle() {
       }
 
       for (const student of studentsData) {
-        const [user] = await pool.query('SELECT id FROM mdl_user WHERE email = ?', [student.email]);
-        if (user.length > 0) {
-          const userId = user[0].id;
-          const [ue] = await pool.query('SELECT id FROM mdl_user_enrolments WHERE enrolid = ? AND userid = ?', [enrolId, userId]);
-          if (ue.length === 0) {
-            await pool.query('INSERT INTO mdl_user_enrolments (status, enrolid, userid, timemodified, timecreated) VALUES (?, ?, ?, ?, ?)', [0, enrolId, userId, daysAgo(30), daysAgo(30)]);
-          }
+        let [user] = await pool.query('SELECT id FROM mdl_user WHERE email = ?', [student.email]);
+        let userId;
+
+        if (user.length === 0) {
+          const firstname = student.email.split('@')[0];
+          const username = firstname.toLowerCase();
+          const [uRes] = await pool.query(
+            'INSERT INTO mdl_user (username, password, firstname, lastname, email, city, country, confirmed, mnethostid, timecreated, timemodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [username, 'not_a_hashed_password', firstname, 'Student', student.email, 'Marrakech', 'MA', 1, 1, daysAgo(30), daysAgo(30)]
+          );
+          userId = uRes.insertId;
+          console.log(`  + Created User: ${student.email} (ID: ${userId})`);
+
+          // User Context
+          await pool.query('INSERT INTO mdl_context (contextlevel, instanceid, depth, path) VALUES (?, ?, ?, ?)', [30, userId, 2, `/1/${userId}`]);
+        } else {
+          userId = user[0].id;
         }
+
+        const [ue] = await pool.query('SELECT id FROM mdl_user_enrolments WHERE enrolid = ? AND userid = ?', [enrolId, userId]);
+        if (ue.length === 0) {
+          await pool.query('INSERT INTO mdl_user_enrolments (status, enrolid, userid, timemodified, timecreated) VALUES (?, ?, ?, ?, ?)', [0, enrolId, userId, daysAgo(30), daysAgo(30)]);
+          console.log(`  + Enrolled ${student.email} in course ${courseId}`);
+        }
+
+        // Add some activity logs for this student in this course
+        await addActivityLogs(pool, userId, courseId);
+        // Add some grades for this student
+        await addGrades(pool, userId, courseId);
       }
     }
 
@@ -137,6 +158,38 @@ async function seedMoodle() {
     console.error('Error during multi-course seeding:', err);
   } finally {
     process.exit(0);
+  }
+}
+
+async function addActivityLogs(pool, userId, courseId) {
+  const actions = ['viewed', 'submitted', 'started'];
+  const targets = ['course', 'assign', 'quiz', 'module'];
+
+  // Create 10-20 random logs
+  const logCount = 10 + Math.floor(Math.random() * 10);
+  for (let i = 0; i < logCount; i++) {
+    const time = daysAgo(Math.floor(Math.random() * 20));
+    await pool.query(
+      'INSERT INTO mdl_logstore_standard_log (eventname, component, action, target, objecttable, objectid, crud, edulevel, contextid, contextlevel, contextinstanceid, userid, courseid, relateduserid, anonymous, other, timecreated, ip, realuserid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      ['\\core\\event\\course_viewed', 'core', actions[i % 3], targets[i % 4], 'course', courseId, 'r', 1, 1, 50, courseId, userId, courseId, null, 0, '[]', time, '127.0.0.1', null]
+    );
+  }
+}
+
+async function addGrades(pool, userId, courseId) {
+  // Get grade items for this course
+  const [items] = await pool.query('SELECT id FROM mdl_grade_items WHERE courseid = ?', [courseId]);
+
+  for (const item of items) {
+    const rawgrade = 50 + Math.floor(Math.random() * 50);
+    const [existing] = await pool.query('SELECT id FROM mdl_grade_grades WHERE itemid = ? AND userid = ?', [item.id, userId]);
+
+    if (existing.length === 0) {
+      await pool.query(
+        'INSERT INTO mdl_grade_grades (itemid, userid, rawgrade, finalgrade, timecreated, timemodified) VALUES (?, ?, ?, ?, ?, ?)',
+        [item.id, userId, rawgrade, rawgrade, daysAgo(5), daysAgo(5)]
+      );
+    }
   }
 }
 

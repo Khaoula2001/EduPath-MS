@@ -3,8 +3,24 @@ from pydantic import BaseModel
 from typing import Dict, Any
 import os
 import random
+import py_eureka_client.eureka_client as eureka_client
 
 app = FastAPI(title="PathPredictor API")
+
+# Eureka Configuration
+EUREKA_SERVER = os.getenv("EUREKA_SERVER", "http://eureka-server:8761/eureka")
+INSTANCE_HOST = os.getenv("INSTANCE_HOST", "path-predictor")
+INSTANCE_PORT = int(os.getenv("INSTANCE_PORT", "8002"))
+
+@app.on_event("startup")
+async def startup_event():
+    print("Initializing Eureka client...")
+    await eureka_client.init_async(
+        eureka_server=EUREKA_SERVER,
+        app_name="path-predictor",
+        instance_port=INSTANCE_PORT,
+        instance_host=INSTANCE_HOST
+    )
 
 class StudentFeatures(BaseModel):
     student_id: str

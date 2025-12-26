@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+import py_eureka_client.eureka_client as eureka_client
+import os
 from app.api import endpoints
 from app.core.database import SessionLocal, Base, engine
 from app.services.embeddings import embedding_service
@@ -8,7 +10,22 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="RecoBuilder API", version="2.0.0")
+app = FastAPI(title="RecommendationBuilder API", version="2.0.0")
+
+# Eureka Configuration
+EUREKA_SERVER = os.getenv("EUREKA_SERVER", "http://eureka-server:8761/eureka")
+INSTANCE_HOST = os.getenv("INSTANCE_HOST", "reco-builder")
+INSTANCE_PORT = int(os.getenv("INSTANCE_PORT", "8003"))
+
+@app.on_event("startup")
+async def startup_event():
+    print("Initializing Eureka client...")
+    await eureka_client.init_async(
+        eureka_server=EUREKA_SERVER,
+        app_name="reco-builder",
+        instance_port=INSTANCE_PORT,
+        instance_host=INSTANCE_HOST
+    )
 
 # Create tables
 Base.metadata.create_all(bind=engine)

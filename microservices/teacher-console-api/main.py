@@ -8,12 +8,28 @@ import pika
 import json
 import threading
 import time
+import py_eureka_client.eureka_client as eureka_client
 import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="TeacherConsole API")
+
+# Eureka Configuration
+EUREKA_SERVER = os.getenv("EUREKA_SERVER", "http://eureka-server:8761/eureka")
+INSTANCE_HOST = os.getenv("INSTANCE_HOST", "teacher-console-api")
+INSTANCE_PORT = int(os.getenv("INSTANCE_PORT", "8004"))
+
+@app.on_event("startup")
+async def startup_event():
+    print("Initializing Eureka client...")
+    await eureka_client.init_async(
+        eureka_server=EUREKA_SERVER,
+        app_name="teacher-console-api",
+        instance_port=INSTANCE_PORT,
+        instance_host=INSTANCE_HOST
+    )
 
 # Database configuration
 DATABASE_URL = f"postgresql://{os.getenv('PG_USER', 'prepadata')}:{os.getenv('PG_PASSWORD', 'prepadata_pwd')}@{os.getenv('PG_HOST', 'postgres')}:{os.getenv('PG_PORT', 5432)}/{os.getenv('PG_DB', 'teacher_db')}"

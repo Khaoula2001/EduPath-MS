@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const morgan = require('morgan');
 require('dotenv').config();
+const Eureka = require('eureka-js-client').Eureka;
 
 const app = express();
 const server = http.createServer(app);
@@ -109,66 +110,115 @@ app.get('/health', (req, res) => {
   res.json({ status: 'OK', service: 'API Gateway', socketStatus: 'Enabled' });
 });
 
-// Proxy Target URLs - Updated for Docker service names
-const PROFILER_URL = process.env.PROFILER_URL || 'http://student_profiler:8000';
-const RECCO_URL = process.env.RECCO_URL || 'http://recco_builder:8003';
-const COACH_API_URL = process.env.COACH_API_URL || 'http://student_coach_api:8005';
+// Proxy Target URLs - Updated for Eureka Discovery
+let PROFILER_URL = process.env.PROFILER_URL || 'http://student-profiler:8000';
+let RECCO_URL = process.env.RECCO_URL || 'http://reco-builder:8003';
+let COACH_API_URL = process.env.COACH_API_URL || 'http://student-coach-api:8005';
+
+// Eureka Configuration
+const eurekaClient = new Eureka({
+  instance: {
+    app: 'api-gateway',
+    hostName: process.env.INSTANCE_HOST || 'api-gateway',
+    ipAddr: '127.0.0.1',
+    statusPageUrl: `http://${process.env.INSTANCE_HOST || 'api-gateway'}:4000/health`,
+    port: {
+      '$': 4000,
+      '@enabled': 'true',
+    },
+    vipAddress: 'api-gateway',
+    dataCenterInfo: {
+      '@class': 'com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo',
+      name: 'MyOwn',
+    },
+  },
+  eureka: {
+    host: process.env.EUREKA_HOST || 'eureka-server',
+    port: process.env.EUREKA_PORT || 8761,
+    servicePath: '/eureka/apps/',
+  },
+});
+
+eurekaClient.start((error) => {
+  console.log(error || 'API Gateway registered with Eureka');
+});
+
+// Helper to get service URL from Eureka
+function getServiceUrl(appName, fallback) {
+  const instances = eurekaClient.getInstancesByAppId(appName);
+  if (instances && instances.length > 0) {
+    const instance = instances[0];
+    return `http://${instance.hostName}:${instance.port.$}`;
+  }
+  return fallback;
+}
+
+// Update proxy targets dynamically if needed (or just use the helper in middleware)
+const getProfilerUrl = () => getServiceUrl('student-profiler', PROFILER_URL);
+const getReccoUrl = () => getServiceUrl('reco-builder', RECCO_URL);
+const getCoachUrl = () => getServiceUrl('student-coach-api', COACH_API_URL);
 
 console.log(`[Config] Profiler: ${PROFILER_URL}`);
 console.log(`[Config] Recco: ${RECCO_URL}`);
 console.log(`[Config] Coach: ${COACH_API_URL}`);
 
 // Proxy for Student Profiler
-app.use(['/api/profiler', '/api/profiling'], createProxyMiddleware({
-  target: PROFILER_URL,
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/profiler': '',
-    '^/api/profiling': ''
-  },
-  onProxyReq: (proxyReq, req, res) => {
-    console.log(`[Proxy] Profiler: ${req.method} ${req.url} -> ${PROFILER_URL}${proxyReq.path}`);
-  },
-  onError: (err, req, res) => {
-    console.error(`[Proxy Error] Profiler:`, err.message);
-    res.status(502).json({ error: 'Profiler service unreachable', details: err.message });
-  }
-}));
+app.use(['/api/profiler', '/api/profiling'], (req, res, next) => {
+  createProxyMiddleware({
+    target: getProfilerUrl(),
+    changeOrigin: true,
+    pathRewrite: {
+      '^/api/profiler': '',
+      '^/api/profiling': ''
+    },
+    onProxyReq: (proxyReq, req, res) => {
+      console.log(`[Proxy] Profiler: ${req.method} ${req.url} -> ${getProfilerUrl()}${proxyReq.path}`);
+    },
+    onError: (err, req, res) => {
+      console.error(`[Proxy Error] Profiler:`, err.message);
+      res.status(502).json({ error: 'Profiler service unreachable', details: err.message });
+    }
+  })(req, res, next);
+});
 
 // Proxy for Recommendation Builder
-app.use(['/api/recco', '/api/recommendations'], createProxyMiddleware({
-  target: RECCO_URL,
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/recco': '',
-    '^/api/recommendations': ''
-  },
-  onProxyReq: (proxyReq, req, res) => {
-    console.log(`[Proxy] Recco: ${req.method} ${req.url} -> ${RECCO_URL}${proxyReq.path}`);
-  },
-  onError: (err, req, res) => {
-    console.error(`[Proxy Error] Recco:`, err.message);
-    res.status(502).json({ error: 'Recommendation service unreachable', details: err.message });
-  }
-}));
+app.use(['/api/recco', '/api/recommendations'], (req, res, next) => {
+  createProxyMiddleware({
+    target: getReccoUrl(),
+    changeOrigin: true,
+    pathRewrite: {
+      '^/api/recco': '',
+      '^/api/recommendations': ''
+    },
+    onProxyReq: (proxyReq, req, res) => {
+      console.log(`[Proxy] Recco: ${req.method} ${req.url} -> ${getReccoUrl()}${proxyReq.path}`);
+    },
+    onError: (err, req, res) => {
+      console.error(`[Proxy Error] Recco:`, err.message);
+      res.status(502).json({ error: 'Recommendation service unreachable', details: err.message });
+    }
+  })(req, res, next);
+});
 
 // Proxy for Coach API (Fallback)
-app.use(['/api/coach', '/api/student', '/api'], createProxyMiddleware({
-  target: COACH_API_URL,
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/coach': '',
-    '^/api/student': '',
-    '^/api': ''
-  },
-  onProxyReq: (proxyReq, req, res) => {
-    console.log(`[Proxy] Coach: ${req.method} ${req.url} -> ${COACH_API_URL}${proxyReq.path}`);
-  },
-  onError: (err, req, res) => {
-    console.error(`[Proxy Error] Coach:`, err.message);
-    res.status(502).json({ error: 'Coach service unreachable', details: err.message });
-  }
-}));
+app.use(['/api/coach', '/api/student', '/api'], (req, res, next) => {
+  createProxyMiddleware({
+    target: getCoachUrl(),
+    changeOrigin: true,
+    pathRewrite: {
+      '^/api/coach': '',
+      '^/api/student': '',
+      '^/api': ''
+    },
+    onProxyReq: (proxyReq, req, res) => {
+      console.log(`[Proxy] Coach: ${req.method} ${req.url} -> ${getCoachUrl()}${proxyReq.path}`);
+    },
+    onError: (err, req, res) => {
+      console.error(`[Proxy Error] Coach:`, err.message);
+      res.status(502).json({ error: 'Coach service unreachable', details: err.message });
+    }
+  })(req, res, next);
+});
 
 // Default 404 handler
 app.use((req, res) => {

@@ -1,6 +1,18 @@
 #version: '3.8'
 
 services:
+  eureka-server:
+    build:
+      context: ./microservices/eureka-server
+    image: edupath/eureka-server:latest
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
   # ==========================================
   # PostgreSQL Database - ULTRA LÉGER
   # ==========================================
@@ -231,14 +243,16 @@ services:
       - moodleapp
       - lmsdb
       - rabbitmq
+      - eureka-server
     environment:
-
       MOODLE_API_URL: http://moodleapp/webservice/rest/server.php
       MOODLE_TOKEN: 340fe84eeed17856a8bad6c59d2c87ed
       DB_HOST: lmsdb
       DB_NAME: lmsconnector
       DB_USER: lms
       DB_PASSWORD: lmspass
+      EUREKA_HOST: eureka-server
+      INSTANCE_HOST: lms-connector
 
     ports:
       - "3001:3000"
@@ -253,12 +267,16 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      eureka-server:
+        condition: service_healthy
     environment:
       PG_HOST: postgres
       PG_PORT: 5432
       PG_DB: profiler_db
       PG_USER: prepadata
       PG_PASSWORD: prepadata_pwd
+      EUREKA_SERVER: http://eureka-server:8761/eureka
+      INSTANCE_HOST: student-profiler
     volumes:
       - ./microservices/student-profiler:/app
     ports:
@@ -272,6 +290,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      eureka-server:
+        condition: service_healthy
     environment:
       PG_HOST: postgres
       PG_PORT: 5432
@@ -279,15 +299,19 @@ services:
       PG_USER: prepadata
       PG_PASSWORD: prepadata_pwd
       MLFLOW_TRACKING_URI: http://mlflow:5000
+      EUREKA_SERVER: http://eureka-server:8761/eureka
+      INSTANCE_HOST: path-predictor
     ports:
       - "8002:8002"
 
   reco-builder:
     build:
-      context: ./microservices/recco-builder
-    image: edupath/recco-builder:latest
+      context: ./microservices/reco-builder
+    image: edupath/reco-builder:latest
     depends_on:
       postgres:
+        condition: service_healthy
+      eureka-server:
         condition: service_healthy
     environment:
       PG_HOST: postgres
@@ -295,6 +319,8 @@ services:
       PG_DB: reco_db
       PG_USER: prepadata
       PG_PASSWORD: prepadata_pwd
+      EUREKA_SERVER: http://eureka-server:8761/eureka
+      INSTANCE_HOST: reco-builder
     ports:
       - "8003:8003"
 
@@ -306,14 +332,29 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      eureka-server:
+        condition: service_healthy
     environment:
       PG_HOST: postgres
       PG_PORT: 5432
       PG_DB: teacher_db
       PG_USER: prepadata
       PG_PASSWORD: prepadata_pwd
+      EUREKA_SERVER: http://eureka-server:8761/eureka
+      INSTANCE_HOST: teacher-console-api
     ports:
       - "8004:8004"
+
+  teacher-console:
+    build:
+      context: ./microservices/TeacherConsole
+      dockerfile: Dockerfile
+    image: edupath/teacher-console:latest
+    ports:
+      - "8088:80"
+    depends_on:
+      - teacher-console-api
+      - api-gateway
 
   student-coach-api:
     build:
@@ -323,12 +364,16 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      eureka-server:
+        condition: service_healthy
     environment:
       PG_HOST: postgres
       PG_PORT: 5432
       PG_DB: student_db
       PG_USER: prepadata
       PG_PASSWORD: prepadata_pwd
+      EUREKA_SERVER: http://eureka-server:8761/eureka
+      INSTANCE_HOST: student-coach-api
     ports:
       - "8005:8005"
 
@@ -344,10 +389,13 @@ services:
       - reco-builder
       - teacher-console-api
       - student-coach-api
+      - eureka-server
     environment:
       - PROFILER_URL=http://student-profiler:8000
       - RECCO_URL=http://reco-builder:8003
       - COACH_API_URL=http://student-coach-api:8005
+      - EUREKA_HOST=eureka-server
+      - INSTANCE_HOST=api-gateway
     ports:
       - "4000:4000"
 

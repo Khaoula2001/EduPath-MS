@@ -7,12 +7,28 @@ import os
 import threading
 import time
 import logging
+import py_eureka_client.eureka_client as eureka_client
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("StudentCoach")
 
 app = FastAPI(title="StudentCoach API")
+
+# Eureka Configuration
+EUREKA_SERVER = os.getenv("EUREKA_SERVER", "http://eureka-server:8761/eureka")
+INSTANCE_HOST = os.getenv("INSTANCE_HOST", "student-coach-api")
+INSTANCE_PORT = int(os.getenv("INSTANCE_PORT", "8005"))
+
+@app.on_event("startup")
+async def startup_event():
+    logger.info("Initializing Eureka client...")
+    await eureka_client.init_async(
+        eureka_server=EUREKA_SERVER,
+        app_name="student-coach-api",
+        instance_port=INSTANCE_PORT,
+        instance_host=INSTANCE_HOST
+    )
 
 # Configuration
 RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'rabbitmq')
