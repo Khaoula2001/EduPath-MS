@@ -13,7 +13,7 @@ RUN pip install --default-timeout=1000 --retries=10 --no-cache-dir --upgrade pip
 # Install PyTorch CPU (largest dependency - cache this layer)
 # Using specific version to ensure cache stability
 RUN pip install --default-timeout=1000 --retries=10 --no-cache-dir \
-    torch==2.1.0 --index-url https://download.pytorch.org/whl/cpu
+    torch==2.2.2 --index-url https://download.pytorch.org/whl/cpu
 
 # Copy ONLY requirements.txt first for better caching
 COPY requirements.txt .

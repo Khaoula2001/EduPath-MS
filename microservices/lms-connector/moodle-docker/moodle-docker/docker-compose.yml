@@ -39,9 +39,8 @@ services:
     depends_on:
       - moodledb
 
-
   # LMSConnector (NOUVEAU)
- 
+
   lmsconnector:
     build: ./LMSConnector
     container_name: lmsconnector
@@ -67,9 +66,8 @@ services:
       - moodleapp
       - lmsdb
 
-  
   # Base PostgreSQL LMSConnector
- 
+
   lmsdb:
     image: postgres:15
     container_name: lmsdb
