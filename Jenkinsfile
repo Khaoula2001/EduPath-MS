@@ -25,146 +25,255 @@ pipeline {
             }
         }
 
-        stage('Microservices') {
+        stage('Microservices & Frontend') {
             parallel {
+                
                 stage('Eureka Server') {
-                    steps {
-                        script {
-                            echo "=== Building Eureka Server ==="
-                            dir('microservices/eureka-server') {
-                                bat "docker build -t ${DOCKER_REGISTRY}/eureka-server:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/eureka-server:latest ."
+                    stages {
+                        stage('Build Eureka') {
+                            steps {
+                                dir('microservices/eureka-server') {
+                                    script {
+                                        echo "Building Eureka Server..."
+                                        bat "docker build -t ${DOCKER_REGISTRY}/eureka-server:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/eureka-server:latest ."
+                                    }
+                                }
                             }
-                            echo "=== Deploying Eureka Server ==="
-                            bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate eureka-server"
+                        }
+                        stage('Deploy Eureka') {
+                            steps {
+                                script {
+                                    echo "Deploying Eureka Server..."
+                                    bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate eureka-server"
+                                }
+                            }
                         }
                     }
                 }
 
                 stage('API Gateway') {
-                    steps {
-                        script {
-                            echo "=== Building API Gateway ==="
-                            dir('microservices/api-gateway') {
-                                bat "docker build -t ${DOCKER_REGISTRY}/api-gateway:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/api-gateway:latest ."
+                    stages {
+                        stage('Build Gateway') {
+                            steps {
+                                dir('microservices/api-gateway') {
+                                    script {
+                                        echo "Building API Gateway..."
+                                        bat "docker build -t ${DOCKER_REGISTRY}/api-gateway:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/api-gateway:latest ."
+                                    }
+                                }
                             }
-                            echo "=== Deploying API Gateway ==="
-                            bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate api-gateway"
+                        }
+                        stage('Deploy Gateway') {
+                            steps {
+                                script {
+                                    echo "Deploying API Gateway..."
+                                    bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate api-gateway"
+                                }
+                            }
                         }
                     }
                 }
 
                 stage('LMS Connector') {
-                    steps {
-                        script {
-                            echo "=== Building LMS Connector ==="
-                            dir('microservices/lms-connector') {
-                                // Need to be careful with context for LMS connector as it has subfolders
-                                // Original: dir('microservices/lms-connector') bat "docker build ..."
-                                // Dockerfile is in `microservices/lms-connector/moodle-docker/moodle-docker/LMSConnector` based on previous file exploration?
-                                // Wait, previous Jenkinsfile said: dir('microservices/lms-connector') ...
-                                // Let's check docker-compose context: ./microservices/lms-connector/moodle-docker/moodle-docker/LMSConnector
-                                // So the build command in previous Jenkinsfile might have been using the Dockerfile at root of lms-connector?
-                                // Let's check file list step 14: microservices/lms-connector has a Dockerfile.
-                                // BUT docker-compose uses a deeper one.
-                                // I will follow the previous Jenkinsfile pattern which successfully built it.
-                                bat "docker build -t ${DOCKER_REGISTRY}/lms-connector:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/lms-connector:latest ."
+                    stages {
+                        stage('Build LMS Connector') {
+                            steps {
+                                dir('microservices/lms-connector') {
+                                    script {
+                                        echo "Building LMS Connector..."
+                                        bat "docker build -t ${DOCKER_REGISTRY}/lms-connector:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/lms-connector:latest ."
+                                    }
+                                }
                             }
-                            echo "=== Deploying LMS Connector ==="
-                            bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate lms-connector"
+                        }
+                        stage('Deploy LMS Connector') {
+                            steps {
+                                script {
+                                    echo "Deploying LMS Connector..."
+                                    bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate lms-connector"
+                                }
+                            }
                         }
                     }
                 }
 
                 stage('Student Profiler') {
-                    steps {
-                        script {
-                            echo "=== Building Student Profiler ==="
-                            dir('microservices/student-profiler') {
-                                bat "docker build -t ${DOCKER_REGISTRY}/student-profiler:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/student-profiler:latest ."
+                    stages {
+                        stage('Build Profiler') {
+                            steps {
+                                dir('microservices/student-profiler') {
+                                    script {
+                                        echo "Building Student Profiler..."
+                                        bat "docker build -t ${DOCKER_REGISTRY}/student-profiler:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/student-profiler:latest ."
+                                    }
+                                }
                             }
-                            echo "=== Deploying Student Profiler ==="
-                            bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate student-profiler"
+                        }
+                        stage('Deploy Profiler') {
+                            steps {
+                                script {
+                                    echo "Deploying Student Profiler..."
+                                    bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate student-profiler"
+                                }
+                            }
                         }
                     }
                 }
 
                 stage('Student Coach API') {
-                    steps {
-                        script {
-                            echo "=== Building Student Coach API ==="
-                            dir('microservices/student-coach-api') {
-                                bat "docker build -t ${DOCKER_REGISTRY}/student-coach-api:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/student-coach-api:latest ."
+                    stages {
+                        stage('Build Coach API') {
+                            steps {
+                                dir('microservices/student-coach-api') {
+                                    script {
+                                        echo "Building Student Coach API..."
+                                        bat "docker build -t ${DOCKER_REGISTRY}/student-coach-api:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/student-coach-api:latest ."
+                                    }
+                                }
                             }
-                            echo "=== Deploying Student Coach API ==="
-                            bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate student-coach-api"
+                        }
+                        stage('Deploy Coach API') {
+                            steps {
+                                script {
+                                    echo "Deploying Student Coach API..."
+                                    bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate student-coach-api"
+                                }
+                            }
                         }
                     }
                 }
 
                 stage('Path Predictor') {
-                    steps {
-                        script {
-                            echo "=== Building Path Predictor ==="
-                            dir('microservices/path-predictor') {
-                                bat "docker build -t ${DOCKER_REGISTRY}/path-predictor:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/path-predictor:latest ."
+                    stages {
+                        stage('Build Predictor') {
+                            steps {
+                                dir('microservices/path-predictor') {
+                                    script {
+                                        echo "Building Path Predictor..."
+                                        bat "docker build -t ${DOCKER_REGISTRY}/path-predictor:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/path-predictor:latest ."
+                                    }
+                                }
                             }
-                            echo "=== Deploying Path Predictor ==="
-                            bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate path-predictor"
+                        }
+                        stage('Deploy Predictor') {
+                            steps {
+                                script {
+                                    echo "Deploying Path Predictor..."
+                                    bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate path-predictor"
+                                }
+                            }
                         }
                     }
                 }
 
                 stage('Prepa Data') {
-                    steps {
-                        script {
-                            echo "=== Building Prepa Data ==="
-                            dir('microservices/prepa-data') {
-                                bat "docker build -t ${DOCKER_REGISTRY}/prepa-data:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/prepa-data:latest ."
+                    stages {
+                        stage('Build PrepaData') {
+                            steps {
+                                dir('microservices/prepa-data') {
+                                    script {
+                                        echo "Building Prepa Data..."
+                                        bat "docker build -t ${DOCKER_REGISTRY}/prepa-data:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/prepa-data:latest ."
+                                    }
+                                }
                             }
-                            echo "=== Deploying Prepa Data ==="
-                            bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate prepadata"
+                        }
+                        stage('Deploy PrepaData') {
+                            steps {
+                                script {
+                                    echo "Deploying Prepa Data..."
+                                    bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate prepadata"
+                                }
+                            }
                         }
                     }
                 }
 
                 stage('Reco Builder') {
-                    steps {
-                        script {
-                            echo "=== Building Reco Builder ==="
-                            dir('microservices/reco-builder') {
-                                bat "docker build -t ${DOCKER_REGISTRY}/reco-builder:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/reco-builder:latest ."
+                    stages {
+                        stage('Build Reco') {
+                            steps {
+                                dir('microservices/reco-builder') { // Corrected folder name based on recent file changes
+                                    script {
+                                        echo "Building Reco Builder..."
+                                        bat "docker build -t ${DOCKER_REGISTRY}/reco-builder:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/reco-builder:latest ."
+                                    }
+                                }
                             }
-                            echo "=== Deploying Reco Builder ==="
-                            bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate reco-builder"
+                        }
+                        stage('Deploy Reco') {
+                            steps {
+                                script {
+                                    echo "Deploying Reco Builder..."
+                                    bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate reco-builder"
+                                }
+                            }
                         }
                     }
                 }
 
                 stage('Teacher Console API') {
-                    steps {
-                        script {
-                            echo "=== Building Teacher Console API ==="
-                            dir('microservices/teacher-console-api') {
-                                bat "docker build -t ${DOCKER_REGISTRY}/teacher-console-api:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/teacher-console-api:latest ."
+                    stages {
+                        stage('Build TC API') {
+                            steps {
+                                dir('microservices/teacher-console-api') {
+                                    script {
+                                        echo "Building Teacher Console API..."
+                                        bat "docker build -t ${DOCKER_REGISTRY}/teacher-console-api:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/teacher-console-api:latest ."
+                                    }
+                                }
                             }
-                            echo "=== Deploying Teacher Console API ==="
-                            bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate teacher-console-api"
+                        }
+                        stage('Deploy TC API') {
+                            steps {
+                                script {
+                                    echo "Deploying Teacher Console API..."
+                                    bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate teacher-console-api"
+                                }
+                            }
                         }
                     }
                 }
 
-                stage('TeacherConsole (Frontend)') {
-                    steps {
-                        script {
-                            echo "=== Building TeacherConsole (Frontend) ==="
-                            dir('microservices/TeacherConsole') {
-                                bat "docker build -t ${DOCKER_REGISTRY}/teacher-console:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/teacher-console:latest ."
+                stage('Teacher Console (Web)') {
+                    stages {
+                        stage('Build TC Web') {
+                            steps {
+                                dir('microservices/TeacherConsole') {
+                                    script {
+                                        echo "Building TeacherConsole (Frontend)..."
+                                        bat "docker build -t ${DOCKER_REGISTRY}/teacher-console:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/teacher-console:latest ."
+                                    }
+                                }
                             }
-                            echo "=== Deploying TeacherConsole ==="
-                            bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate teacher-console"
+                        }
+                        stage('Deploy TC Web') {
+                            steps {
+                                script {
+                                    echo "Deploying TeacherConsole (Frontend)..."
+                                    bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate teacher-console"
+                                }
+                            }
                         }
                     }
                 }
+
+                stage('Mobile Front') {
+                    stages {
+                        stage('Build APK') {
+                            steps {
+                                dir('microservices/student_coach/android') {
+                                    script {
+                                        echo "Building Android APK..."
+                                        // Using gradlew.bat for Windows
+                                        bat 'gradlew.bat assembleDebug'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
             }
         }
 
@@ -183,10 +292,10 @@ pipeline {
             echo '=== Pipeline Finished ==='
         }
         success {
-            echo 'SUCCESS: All microservices built and deployed.'
+            echo 'SUCCESS: All microservices and mobile front built.'
         }
         failure {
-            echo 'FAILURE: One or more services failed to build or deploy.'
+            echo 'FAILURE: One or more stages failed.'
         }
     }
 }
