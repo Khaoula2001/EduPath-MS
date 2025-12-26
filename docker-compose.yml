@@ -11,7 +11,7 @@ services:
       POSTGRES_USER: prepadata
       POSTGRES_PASSWORD: prepadata_pwd
       POSTGRES_DB: prepadata_db
-      POSTGRES_MULTIPLE_DATABASES: "profiler_db,predictor_db,sonar"
+      POSTGRES_MULTIPLE_DATABASES: "profiler_db,predictor_db"
     ports:
       - "5432:5432"
     volumes:
@@ -38,29 +38,6 @@ services:
       timeout: 30s
       retries: 3
   
-  sonarqube:
-    image: sonarqube:9.9-community
-    container_name: sonarqube
-    ports:
-      - "9000:9000"
-    environment:
-      - SONAR_JDBC_URL=jdbc:postgresql://postgres:5432/sonar
-      - SONAR_JDBC_USERNAME=prepadata
-      - SONAR_JDBC_PASSWORD=prepadata_pwd
-    depends_on:
-      - postgres
-    volumes:
-      - sonarqube_data:/opt/sonarqube/data
-      - sonarqube_extensions:/opt/sonarqube/extensions
-      - sonarqube_logs:/opt/sonarqube/logs
-    # Tweak for ElasticSearch mmap count
-    # command: sysctl -w vm.max_map_count=262144 
-    # Note: vm.max_map_count usually needs to be set on host.
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/api/system/status"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
 
   # ==========================================
   # MLFLOW & MINIO
@@ -469,6 +446,3 @@ volumes:
   moodledata:
   clouddbdata:
   lmsdbdata:
-  sonarqube_data:
-  sonarqube_extensions:
-  sonarqube_logs:
