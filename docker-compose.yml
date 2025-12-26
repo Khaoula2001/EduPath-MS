@@ -373,11 +373,11 @@ services:
       RABBITMQ_DEFAULT_USER: edupath
       RABBITMQ_DEFAULT_PASS: edupath
     healthcheck:
-      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 15s
+      timeout: 15s
+      retries: 10
+      start_period: 60s
 
   minio:
     image: minio/minio
