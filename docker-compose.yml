@@ -228,6 +228,7 @@ services:
     depends_on:
       - moodleapp
       - lmsdb
+      - rabbitmq
     environment:
 
       MOODLE_API_URL: http://moodleapp/webservice/rest/server.php
@@ -247,6 +248,8 @@ services:
     image: edupath/student-profiler:latest
     depends_on:
       postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     environment:
       PG_HOST: postgres

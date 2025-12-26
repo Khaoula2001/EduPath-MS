@@ -59,10 +59,23 @@ class ProfilingService:
                 # Handle dict structure of model
                 if isinstance(self.pipeline, dict):
                     # Manual pipeline execution based on the keys we found
-                    X = df[self.pipeline['feature_cols']]
-                    X_imputed = self.pipeline['imputer'].transform(X)
-                    X_scaled = self.pipeline['scaler'].transform(X_imputed)
+                    feature_cols = self.pipeline['feature_cols']
+                    X = df[feature_cols]
+                    
+                    # Transform while keeping feature names where possible
+                    X_imputed_arr = self.pipeline['imputer'].transform(X)
+                    X_imputed = pd.DataFrame(X_imputed_arr, columns=feature_cols)
+                    
+                    X_scaled_arr = self.pipeline['scaler'].transform(X_imputed)
+                    X_scaled = pd.DataFrame(X_scaled_arr, columns=feature_cols)
+                    
                     X_pca = self.pipeline['pca'].transform(X_scaled)
+                    
+                    # K-means doesn't care about feature names but we pass them to avoid warnings
+                    # however PCA changes dimensionality, so X_pca doesn't have original names.
+                    # The warning usually comes from the first estimator that expects names
+                    # In this case, scaler and imputer were fitted with names.
+                    
                     cluster_id = self.pipeline['kmeans'].predict(X_pca)[0]
                 else:
                     cluster_id = self.pipeline.predict(df)[0]
