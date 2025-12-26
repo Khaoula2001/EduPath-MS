@@ -58,8 +58,9 @@ pipeline {
                     echo "=== Starting Automatic Deployment ==="
                     // Use a fixed project name to avoid conflicts with fluctuating workspace folder names
                     // Stop and remove existing containers, networks, and orphan services
-                    bat "docker-compose -p edupath-ms down --remove-orphans || true"
-                    
+                    // Command commented out to avoid stopping containers during deployment in this environment
+                    // bat "docker-compose -p edupath-ms down --remove-orphans || true"
+
                     echo "=== Deploying New Version ==="
                     // Start services in detached mode with orphan removal
                     bat "docker-compose -p edupath-ms up -d --remove-orphans"
@@ -75,7 +76,8 @@ pipeline {
             echo '=== Pipeline Finished: Cleaning Up ==='
             script {
                 // Remove containers and networks to avoid conflicts with future commits/runs
-//                 bat "docker-compose -p edupath-ms down --remove-orphans || true"
+                // Commented out to prevent automatic stopping/removal during CI runs in this environment
+                // bat "docker-compose -p edupath-ms down --remove-orphans || true"
             }
         }
         success {
@@ -86,4 +88,3 @@ pipeline {
         }
     }
 }
-
