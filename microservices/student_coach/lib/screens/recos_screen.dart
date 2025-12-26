@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../models/recommendation.dart';
-import '../services/recommendation_service.dart';
+import '../models/student_profile.dart';
+import '../services/student_service.dart';
+import '../services/auth_service.dart';
 
 class RecosScreen extends StatefulWidget {
   const RecosScreen({super.key});
@@ -10,7 +11,7 @@ class RecosScreen extends StatefulWidget {
 }
 
 class _RecosScreenState extends State<RecosScreen> {
-  final RecommendationService _recoService = RecommendationService();
+  final StudentService _studentService = StudentService();
   List<Recommendation> _recommendations = [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -23,20 +24,22 @@ class _RecosScreenState extends State<RecosScreen> {
 
   Future<void> _loadRecommendations() async {
     try {
+      if (!mounted) return;
       setState(() {
         _isLoading = true;
         _errorMessage = null;
       });
 
-      // Simulation : on demande des recommandations pour le profil "Assidu"
-      // Dans une version finale, on récupèrerait le profil depuis un State Management (Provider, Bloc)
-      final recos = await _recoService.getRecommendations('student_123', 'Assidu');
-
+      final studentId = AuthService.currentUser?.id ?? '1';
+      final profile = await _studentService.getMyProfile(studentId);
+      
+      if (!mounted) return;
       setState(() {
-        _recommendations = recos;
+        _recommendations = profile.recommendations;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = e.toString();
         _isLoading = false;
@@ -97,15 +100,19 @@ class _RecosScreenState extends State<RecosScreen> {
     Color typeColor = Colors.blue;
     IconData icon = Icons.description_outlined;
     
-    if (reco.type.toLowerCase().contains('video')) {
+    final type = reco.type.toLowerCase();
+    if (type.contains('video')) {
       typeColor = const Color(0xFFFF6B6B);
       icon = Icons.videocam_outlined;
-    } else if (reco.type.toLowerCase().contains('pdf')) {
+    } else if (type.contains('pdf')) {
       typeColor = const Color(0xFF4ECDC4);
       icon = Icons.picture_as_pdf_outlined;
-    } else if (reco.type.toLowerCase().contains('exercice')) {
-      typeColor = const Color(0xFFFFD93D);
-      icon = Icons.fitness_center_outlined;
+    } else if (type.contains('exercice')) {
+      typeColor = const Color(0xFFFCC419);
+      icon = Icons.assignment_outlined;
+    } else if (type.contains('ressource') || type.contains('resource')) {
+      typeColor = const Color(0xFF8B80F8);
+      icon = Icons.library_books_outlined;
     }
 
     return Container(

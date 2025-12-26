@@ -43,7 +43,7 @@ class ProfilingService:
             logger.warning("Model pipeline is not loaded. Using dummy prediction.")
             cluster_id = 1 # Default to Regular
         else:
-            data = {
+            data_dict = {
                 "total_clicks": [features.total_clicks],
                 "assessment_submissions_count": [features.assessment_submissions_count],
                 "mean_score": [features.mean_score],
@@ -51,41 +51,72 @@ class ProfilingService:
                 "study_duration": [features.study_duration],
                 "progress_rate": [features.progress_rate]
             }
-            df = pd.DataFrame(data)
+            df = pd.DataFrame(data_dict)
 
             try:
                 logger.info(f"Processing prediction for student {features.student_id}")
 
-                cluster_id = self.pipeline.predict(df)[0]
+                # Handle dict structure of model
+                if isinstance(self.pipeline, dict):
+                    # Manual pipeline execution based on the keys we found
+                    X = df[self.pipeline['feature_cols']]
+                    X_imputed = self.pipeline['imputer'].transform(X)
+                    X_scaled = self.pipeline['scaler'].transform(X_imputed)
+                    X_pca = self.pipeline['pca'].transform(X_scaled)
+                    cluster_id = self.pipeline['kmeans'].predict(X_pca)[0]
+                else:
+                    cluster_id = self.pipeline.predict(df)[0]
+                
                 cluster_id = int(cluster_id)
-
                 logger.info(f"Predicted cluster: {cluster_id}")
 
             except Exception as e:
                 logger.error(f"Error during prediction pipeline: {e}")
                 raise e
 
+        # Profile names based on your demo and model's likely clusters
+        # 0: At-Risk, 1: Regular, 2: Procrastinator
         profil_type = self.cluster_profile_map.get(cluster_id, "Unknown")
+        # Cluster to Risk Map: 0: At-Risk (High), 1: Regular (Low), 2: Procrastinator (Medium)
+        risk_map = {0: "High", 1: "Low", 2: "Medium"}
+        risk_level = risk_map.get(cluster_id, "Low")
 
         try:
-            student_profile = db.query(StudentProfile).filter(StudentProfile.student_id == features.student_id).first()
+            student_profile = db.query(StudentProfile).filter(StudentProfile.student_id == str(features.student_id)).first()
             
             if student_profile:
                 logger.info(f"Updating existing profile for student {features.student_id}")
                 student_profile.cluster_id = cluster_id
                 student_profile.profil_type = profil_type
-                student_profile.timestamp = pd.Timestamp.now()
+                student_profile.mean_score = features.mean_score
+                student_profile.progress_rate = features.progress_rate
+                student_profile.risk_level = risk_level
             else:
                 logger.info(f"Creating new profile for student {features.student_id}")
                 student_profile = StudentProfile(
-                    student_id=features.student_id,
+                    student_id=str(features.student_id),
                     cluster_id=cluster_id,
-                    profil_type=profil_type
+                    profil_type=profil_type,
+                    mean_score=features.mean_score,
+                    progress_rate=features.progress_rate,
+                    risk_level=risk_level
                 )
                 db.add(student_profile)
             
             db.commit()
             db.refresh(student_profile)
+            
+            # Publish profile update event to RabbitMQ
+            try:
+                from app.services.publisher import profile_publisher
+                profile_publisher.publish_profile_update(
+                    student_id=features.student_id,
+                    profile_type=profil_type,
+                    risk_level=risk_level,
+                    cluster_id=cluster_id
+                )
+            except Exception as pub_error:
+                logger.warning(f"Failed to publish profile update event: {pub_error}")
 
             return PredictionResult.from_orm(student_profile)
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/student_profile.dart';
 import '../services/student_service.dart';
+import '../services/auth_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,8 +29,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _errorMessage = null;
       });
       
-      // Simulation d'un ID étudiant (à remplacer par l'ID réel après authentification)
-      final profile = await _studentService.getMyProfile('student_123');
+      final studentId = AuthService.currentUser?.id ?? '1';
+      final profile = await _studentService.getMyProfile(studentId);
       
       setState(() {
         _profile = profile;
@@ -74,6 +75,24 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 24),
           _buildProfileDescriptionCard(),
           const SizedBox(height: 32),
+          if (_profile?.recommendations.isNotEmpty ?? false) ...[
+            const Text(
+              'Recommended Resources',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1A1C24),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ...(_profile!.recommendations.map((reco) => _buildActivityItem(
+              icon: reco.type == 'video' ? Icons.play_circle_fill : Icons.description,
+              iconColor: Colors.purple,
+              title: reco.title,
+              subtitle: 'Basé sur votre profil ${_profile!.profileType}',
+            )).toList()),
+            const SizedBox(height: 24),
+          ],
           const Text(
             'Recent Activities',
             style: TextStyle(
@@ -83,12 +102,20 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          _buildActivityItem(
-            icon: Icons.history,
-            iconColor: Colors.blue,
-            title: 'Dernière activité',
-            subtitle: _profile?.lastActivity ?? 'Aucune activité',
-          ),
+          if (_profile?.recentActivities.isEmpty ?? true)
+            _buildActivityItem(
+              icon: Icons.history,
+              iconColor: Colors.blue,
+              title: 'Dernière activité',
+              subtitle: _profile?.lastActivity ?? 'Aucune activité',
+            )
+          else
+            ...(_profile!.recentActivities.map((activity) => _buildActivityItem(
+              icon: activity.type == 'reco' ? Icons.lightbulb : Icons.notifications,
+              iconColor: activity.type == 'alert' ? Colors.orange : Colors.blue,
+              title: activity.title,
+              subtitle: activity.message,
+            )).toList()),
         ],
       ),
     );
@@ -127,7 +154,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           child: Center(
             child: Text(
-              _profile?.studentId.substring(0, 2).toUpperCase() ?? '..',
+              _profile != null && _profile!.studentId.isNotEmpty
+                  ? _profile!.studentId.substring(0, _profile!.studentId.length >= 2 ? 2 : 1).toUpperCase()
+                  : '..',
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
