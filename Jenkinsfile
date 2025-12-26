@@ -274,22 +274,7 @@ pipeline {
                     }
                 }
 
-                stage('Student Coach') {
-                    stages {
-                        stage('Build Student Coach') {
-                            steps {
-                                dir('microservices/student_coach/android') {
-                                    script {
-                                        echo "Building Android APK..."
-                                        bat "docker run --rm -v %CD%:/project -w /project cimg/android:2024.01 bash -c \"gradle assembleDebug\""
-                                    }
-                                    echo "Archiving APK..."
-                                    archiveArtifacts artifacts: '**/app-debug.apk', fingerprint: true, onlyIfSuccessful: true
-                                }
-                            }
-                        }
-                    }
-                }
+
 
             }
         }
