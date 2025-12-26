@@ -74,11 +74,10 @@ pipeline {
     post {
         always {
             echo '=== Pipeline Finished: Cleaning Up ==='
-            script {
-                // Remove containers and networks to avoid conflicts with future commits/runs
-                // Commented out to prevent automatic stopping/removal during CI runs in this environment
-                // bat "docker-compose -p edupath-ms down --remove-orphans || true"
-            }
+            // Remove containers and networks to avoid conflicts with future commits/runs
+            // Commented out to prevent automatic stopping/removal during CI runs in this environment
+            // bat "docker-compose -p edupath-ms down --remove-orphans || true"
+
         }
         success {
             echo 'Build, Dockerization, and Deployment verification successful!'
