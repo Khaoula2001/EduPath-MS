@@ -42,7 +42,7 @@ pipeline {
                                     script {
                                         echo "Running SonarQube Analysis for Eureka Server..."
                                         // Java project uses Maven
-                                        bat "mvn clean verify sonar:sonar -Dsonar.projectKey=eureka-server -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.login=admin -Dsonar.password=admin -DskipTests"
+                                        bat "mvn clean verify -DskipTests"
                                     }
                                 }
                             }

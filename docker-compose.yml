@@ -11,7 +11,7 @@ services:
       POSTGRES_USER: prepadata
       POSTGRES_PASSWORD: prepadata_pwd
       POSTGRES_DB: prepadata_db
-      POSTGRES_MULTIPLE_DATABASES: "profiler_db,predictor_db"
+      POSTGRES_MULTIPLE_DATABASES: "profiler_db,predictor_db,sonar"
     ports:
       - "5432:5432"
     volumes:
