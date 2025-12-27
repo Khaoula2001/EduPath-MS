@@ -95,6 +95,11 @@ def delete_resource(resource_id: str, db: Session = Depends(get_db)):
 
     return {"message": "Resource deleted successfully", "id": resource_id}
 
+@router.get("/resources", response_model=List[ResourceRead])
+def get_resources(db: Session = Depends(get_db)):
+    resources = db.query(Resource).all()
+    return resources
+
 @router.get("/health")
 def health():
     return {"status": "ok", "index_size": vector_index.ntotal}
