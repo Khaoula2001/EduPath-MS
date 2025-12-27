@@ -23,7 +23,7 @@ export class SocketService {
 
     onEvent(event: string): Observable<any> {
         return new Observable(observer => {
-            this.socket.on(event, (data) => observer.next(data));
+            this.socket.on(event, (data: any) => observer.next(data));
 
             // Cleanup on unsubscribe
             return () => {

@@ -31,3 +31,17 @@ CREATE TABLE IF NOT EXISTS student_features (
 );
 CREATE INDEX idx_student_module ON student_features(id_student, code_module);
 CREATE INDEX idx_dropout_risk ON student_features(dropout_risk_signal);
+
+CREATE TABLE IF NOT EXISTS raw_learning_data (
+    id SERIAL PRIMARY KEY,
+    source VARCHAR(50) NOT NULL,
+    data_type VARCHAR(100) NOT NULL,
+    raw_json JSONB NOT NULL,
+    processed BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Grant privileges to prepadata user (if exists, or ensure user creation elsewhere)
+-- We assume the user 'lms' owns this, but prepadata needs access if it connects here.
+-- In the architecture, prepadata connects to lmsdb.
+-- GRANT ALL PRIVILEGES ON TABLE raw_learning_data TO prepadata;

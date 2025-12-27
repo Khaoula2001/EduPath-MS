@@ -1,6 +1,7 @@
 const MoodleExtractorService = require('./moodle-extractor.service');
 const FeatureCalculatorService = require('./feature-calculator.service');
 const StudentFeaturesRepository = require('../repositories/student-features.repository');
+const RawDataRepository = require('../repositories/raw-data.repository');
 const MessengerService = require('./messenger.service');
 
 class SyncOrchestratorService {
@@ -8,6 +9,7 @@ class SyncOrchestratorService {
     this.extractor = new MoodleExtractorService();
     this.calculator = new FeatureCalculatorService();
     this.repo = new StudentFeaturesRepository();
+    this.rawRepo = new RawDataRepository();
   }
 
   async syncAllStudents(courseId) {
@@ -37,6 +39,19 @@ class SyncOrchestratorService {
       this.extractor.getUserProfile(studentId),
       this.extractor.getCourseModules(courseId),
     ]);
+
+    // Save Raw Data for PrepaData
+    try {
+      await Promise.all([
+        this.rawRepo.saveRawData('MOODLE', 'student_vle', logs),
+        this.rawRepo.saveRawData('MOODLE', 'student_assessment', grades),
+        this.rawRepo.saveRawData('MOODLE', 'assessments', submissions), // Using submissions as assessments source for now
+        this.rawRepo.saveRawData('MOODLE', 'student_info', profile)
+      ]);
+    } catch (e) {
+      console.error(`Failed to save raw data for student ${studentId}:`, e);
+      // Continue execution, don't fail the whole sync
+    }
 
     // Calculate features
     const engagementMetrics = this.calculator.calculateEngagementMetrics(logs);

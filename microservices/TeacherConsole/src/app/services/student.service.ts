@@ -36,13 +36,13 @@ export class StudentService {
 
     getStudents(): Observable<Student[]> {
         return this.http.get<Student[]>(`${this.coachApiUrl}/students`).pipe(
-            switchMap(students => {
+            switchMap((students: Student[]) => {
                 if (!students || students.length === 0) return of([]);
 
                 // For each student, fetch additional details (profile/risk) in parallel
-                const profileRequests = students.map(student =>
+                const profileRequests = students.map((student: Student) =>
                     this.getStudentProfile(student.id).pipe(
-                        map(profile => ({ ...student, ...profile })),
+                        map((profile: Partial<Student>) => ({ ...student, ...profile })),
                         catchError(() => of(student)) // detailed info fail shouldn't break list
                     )
                 );
@@ -53,7 +53,7 @@ export class StudentService {
 
     getStudentProfile(studentId: string): Observable<Partial<Student>> {
         return this.http.get<any>(`${this.profilerApiUrl}/profile/${studentId}`).pipe(
-            map(data => {
+            map((data: any) => {
                 // Transform backend profile data to UI model
                 const riskLevel = data.risk_level || 'Low';
                 let riskColor = 'green';
