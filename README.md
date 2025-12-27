@@ -14,26 +14,9 @@
 
 https://github.com/user-attachments/assets/88387013-8b25-4da8-a9e7-193cb7223aa2
 ### Video Demonstration
-### Video Demonstration
-
 https://github.com/user-attachments/assets/736e9f77-85bc-4fa9-a653-56e57d0ce507
-### Screenshots Gallery
+   
 
-#### 1. Teacher Console (Dashboard)
-> [!NOTE]
-> **Teacher Dashboard & Risk Analysis**  
-> ![Teacher Dashboard](screens/teacher_dashboard_overview.jpeg)
-> ![Risk Distribution](screens/teacher_dashboard_risks.jpeg)
-> *Real-time analytics, risk alerts, and class performance metrics.*
-
-#### 2. Student Mobile App (EduPath)
-> [!NOTE]
-> **Student Home & Recommendations**  
-> <p align="center">
->   <img src="screens/student_coach_home.jpeg" width="45%" alt="Home">
->   <img src="screens/student_coach_recommendations.jpeg" width="45%" alt="Recommendations">
-> </p>
-> *Personalized learning path and resource recommendations for students.*
 
 #### 3. DevOps Pipelines (Jenkins)
 > [!NOTE]
