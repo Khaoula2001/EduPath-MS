@@ -14,7 +14,6 @@
 
 https://github.com/user-attachments/assets/88387013-8b25-4da8-a9e7-193cb7223aa2
 
-https://github.com/Khaoula2001/EduPath-MS/releases/download/demo-video/demonstration.1.mp4
 
 ### Screenshots Gallery
 
