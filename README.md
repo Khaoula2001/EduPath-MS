@@ -147,10 +147,4 @@ The project is built on a **secure, event-driven microservices architecture**, f
 *   **Isolation**: Each microservice manages its own database schema.
 
 ---
-
-## 👥 Contributors
-
-*   **Nisrine Lachguer** - *Project Lead & Architecture*
-
----
-*Generated with ❤️ by EduPath Team.*
+*Made with ❤️ by EduPath Team.*
