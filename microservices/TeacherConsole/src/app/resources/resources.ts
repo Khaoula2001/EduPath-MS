@@ -53,8 +53,8 @@ export class Resources implements OnInit {
 
     fetchResources() {
         this.isLoading = true;
-        this.http.get<Resource[]>(this.apiUrl).pipe(
-            map(data => data.map(r => this.mapResourceToUI(r))),
+        this.http.get<any[]>(this.apiUrl).pipe(
+            map((data: any[]) => data.map((r: any) => this.mapResourceToUI(r))),
             catchError(err => {
                 console.error('Error fetching resources:', err);
                 return of([]);
@@ -136,8 +136,9 @@ export class Resources implements OnInit {
         this.showModal = false;
     }
 
-    getTagTypeClass(type: string) {
-        switch ((type || '').toLowerCase()) {
+    getTagTypeClass(type: string | undefined) {
+        if (!type) return 'tag-gray';
+        switch (type.toLowerCase()) {
             case 'vidéo': return 'tag-purple';
             case 'video': return 'tag-purple';
             case 'document': return 'tag-blue';
@@ -149,7 +150,8 @@ export class Resources implements OnInit {
         }
     }
 
-    getTagLevelClass(color: string) {
+    getTagLevelClass(color: string | undefined) {
+        if (!color) return 'tag-gray';
         switch (color) {
             case 'red': return 'tag-red';
             case 'orange': return 'tag-orange';
