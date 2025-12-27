@@ -42,11 +42,14 @@ if [ ! -f /var/www/html/config.php ]; then
     # The user's issue implies it never fully set up because they didn't go through web wizard.
     
     # We will attempt a non-interactive install. 
+    echo "DB HOST: $MYSQL_HOST"
+    echo "DB NAME: $MYSQL_DATABASE"
+
     # We will attempt a non-interactive install. 
     php admin/cli/install.php \
         --chmod=2777 \
         --lang=en \
-        --wwwroot="http://localhost:8088" \
+        --wwwroot="http://localhost" \
         --dataroot=/var/www/moodledata \
         --dbtype=mysqli \
         --dbhost=$MYSQL_HOST \
