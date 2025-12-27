@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { StudentService, Student } from '../services/student.service';
 
 @Component({
   selector: 'app-risk-students-table',
@@ -10,81 +11,45 @@ import { Router } from '@angular/router';
   templateUrl: './risk-students-table.html',
   styleUrls: ['./risk-students-table.css']
 })
-export class RiskStudentsTable {
-  constructor(private router: Router) { }
+export class RiskStudentsTable implements OnInit {
+  riskStudents: any[] = [];
+  isLoading = true;
+  error: string | null = null;
+
+  // États des filtres et tri
+  currentSort = 'riskScore';
+  sortDirection: 'asc' | 'desc' = 'desc'; // Par défaut: décroissant pour le risque
+  currentFilter = 'all';
+  searchTerm = '';
+
+  constructor(private router: Router, private studentService: StudentService) { }
+
+  ngOnInit() {
+    this.loadStudents();
+  }
+
+  loadStudents() {
+    this.isLoading = true;
+    this.studentService.getStudents().subscribe({
+      next: (data: Student[]) => {
+        // Add UI state properties
+        this.riskStudents = data.map(s => ({
+          ...s,
+          expanded: false
+        }));
+        this.isLoading = false;
+      },
+      error: (err: any) => {
+        console.error('Failed to load risk students', err);
+        this.error = 'Erreur lors du chargement des données.';
+        this.isLoading = false;
+      }
+    });
+  }
 
   viewStudentDetails(student: any) {
     this.router.navigate(['/student', student.id]);
   }
-  // Données des étudiants à risque
-  riskStudents = [
-    {
-      id: 1,
-      name: 'Anas Moussaoui',
-      email: 'anas.moussaoui@etudiant.fr',
-      riskScore: 90,
-      riskLevel: 'Critique',
-      performance: 35,
-      lastActivity: '2025-12-03',
-      hasAction: true,
-      expanded: false
-    },
-    {
-      id: 2,
-      name: 'Fatima Zahra',
-      email: 'fatima.zahra@etudiant.fr',
-      riskScore: 85,
-      riskLevel: 'Critique',
-      performance: 45,
-      lastActivity: '2025-12-05',
-      hasAction: true,
-      expanded: false
-    },
-    {
-      id: 3,
-      name: 'Mohamed Amine',
-      email: 'mohamed.amine@etudiant.fr',
-      riskScore: 72,
-      riskLevel: 'Élevé',
-      performance: 55,
-      lastActivity: '2025-12-07',
-      hasAction: true,
-      expanded: false
-    },
-    {
-      id: 4,
-      name: 'Yassine Tahiri',
-      email: 'yassine.tahiri@etudiant.fr',
-      riskScore: 68,
-      riskLevel: 'Élevé',
-      performance: 50,
-      lastActivity: '2025-12-06',
-      hasAction: true,
-      expanded: false
-    },
-    {
-      id: 5,
-      name: 'Khawla Bennani',
-      email: 'khawla.bennani@etudiant.fr',
-      riskScore: 45,
-      riskLevel: 'Moyen',
-      performance: 70,
-      lastActivity: '2025-12-08',
-      hasAction: true,
-      expanded: false
-    },
-    {
-      id: 6,
-      name: 'Salma Bennani',
-      email: 'salma.bennani@etudiant.fr',
-      riskScore: 40,
-      riskLevel: 'Moyen',
-      performance: 75,
-      lastActivity: '2025-12-08',
-      hasAction: true,
-      expanded: false
-    }
-  ];
 
   // Options de tri
   sortOptions = [
@@ -102,6 +67,7 @@ export class RiskStudentsTable {
     { value: 'moyen', label: 'Moyen' },
     { value: 'faible', label: 'Faible' }
   ];
+
   hasExpandedStudents(): boolean {
     return this.riskStudents.some(student => student.expanded);
   }
@@ -110,13 +76,6 @@ export class RiskStudentsTable {
   getExpandedStudent(): any {
     return this.riskStudents.find(student => student.expanded);
   }
-
-
-  // État des filtres et tri
-  currentSort = 'riskScore';
-  sortDirection: 'asc' | 'desc' = 'desc'; // Par défaut: décroissant pour le risque
-  currentFilter = 'all';
-  searchTerm = '';
 
   // Dans la classe RiskStudentsTable
   getDaysAgo(dateString: string): number {

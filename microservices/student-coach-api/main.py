@@ -96,6 +96,49 @@ def get_student_stats(student_id: str):
         logger.error(f"Error fetching student stats: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
+@app.get("/students")
+def get_students():
+    """
+    Fetch list of students from the raw LMS data (Moodle sync).
+    """
+    try:
+        with LmsSession() as session:
+            # Query the latest student_info raw data
+            # We assume lms-connector saved it with data_type='student_info'
+            query = text("""
+                SELECT raw_json 
+                FROM raw_learning_data 
+                WHERE source='MOODLE' AND data_type='student_info' 
+                ORDER BY created_at DESC 
+                LIMIT 1
+            """)
+            result = session.execute(query).fetchone()
+
+            if not result or not result[0]:
+                return []
+
+            # raw_json is likely a list of users from core_enrol_get_enrolled_users
+            users_data = result[0]
+            
+            # Extract relevant fields
+            students = []
+            if isinstance(users_data, list):
+                for user in users_data:
+                    # Moodle typically returns 'id', 'fullname', 'email'
+                    students.append({
+                        "id": str(user.get("id")),
+                        "name": user.get("fullname"),
+                        "email": user.get("email"),
+                        # These will be enriched by other calls or defaults
+                        "initials": "".join([n[0] for n in user.get("fullname", "S").split(" ")]).upper()[:2]
+                    })
+            
+            return students
+
+    except Exception as e:
+        logger.error(f"Error fetching students: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Background RabbitMQ Consumer
 def start_consumer():
     while True:

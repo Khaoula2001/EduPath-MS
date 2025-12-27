@@ -4,6 +4,14 @@ from app.alert_logic import generate_alert
 
 app = FastAPI(title="PathPredictor AI Service")
 
+@app.get("/")
+def read_root():
+    return {"service": "PathPredictor AI Service", "status": "running"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
 @app.post("/predict")
 def predict(student_data: dict):
     student_id = student_data.get("student_id")

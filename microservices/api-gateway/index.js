@@ -220,6 +220,29 @@ app.use(['/api/coach', '/api/student', '/api'], (req, res, next) => {
   })(req, res, next);
 });
 
+// Proxy for Teacher Console API
+let TEACHER_API_URL = process.env.TEACHER_API_URL || 'http://teacher-console-api:8004';
+const getTeacherUrl = () => getServiceUrl('teacher-console-api', TEACHER_API_URL);
+console.log(`[Config] Teacher: ${TEACHER_API_URL}`);
+
+app.use(['/teacher', '/api/teacher'], (req, res, next) => {
+  createProxyMiddleware({
+    target: getTeacherUrl(),
+    changeOrigin: true,
+    pathRewrite: {
+      '^/teacher': '',
+      '^/api/teacher': ''
+    },
+    onProxyReq: (proxyReq, req, res) => {
+      console.log(`[Proxy] Teacher: ${req.method} ${req.url} -> ${getTeacherUrl()}${proxyReq.path}`);
+    },
+    onError: (err, req, res) => {
+      console.error(`[Proxy Error] Teacher:`, err.message);
+      res.status(502).json({ error: 'Teacher service unreachable', details: err.message });
+    }
+  })(req, res, next);
+});
+
 // Default 404 handler
 app.use((req, res) => {
   console.log(`404: ${req.method} ${req.url}`);
