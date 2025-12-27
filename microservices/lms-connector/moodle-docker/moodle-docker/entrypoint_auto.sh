@@ -42,13 +42,14 @@ if [ ! -f /var/www/html/config.php ]; then
     # The user's issue implies it never fully set up because they didn't go through web wizard.
     
     # We will attempt a non-interactive install. 
+    # We will attempt a non-interactive install. 
     php admin/cli/install.php \
         --chmod=2777 \
         --lang=en \
         --wwwroot="http://localhost:8088" \
         --dataroot=/var/www/moodledata \
         --dbtype=mysqli \
-        --dbhost=$PMA_HOST \
+        --dbhost=$MYSQL_HOST \
         --dbname=$MYSQL_DATABASE \
         --dbuser=$MYSQL_USER \
         --dbpass=$MYSQL_PASSWORD \
@@ -59,13 +60,49 @@ if [ ! -f /var/www/html/config.php ]; then
         --adminemail=admin@localhost.com \
         --non-interactive \
         --agree-license
+
+    # Enable Web Services
+    echo "Enabling Web Services..."
+    php admin/cli/cfg.php --name=enablewebservices --set=1
+    php admin/cli/cfg.php --name=webserviceprotocols --set=rest
+
+    # Insert Token
+    echo "Inserting LMS Token..."
+    php -r "
+    define('CLI_SCRIPT', true);
+    require('/var/www/html/config.php');
+    global \$DB;
+    \$service = \$DB->get_record('external_services', ['shortname'=>'moodle_mobile_app']);
+    if (\$service) {
+        \$token = (object)[
+            'token' => '340fe84eeed17856a8bad6c59d2c87ed',
+            'privatetoken' => null,
+            'tokentype' => 1,
+            'userid' => 2,
+            'externalserviceid' => \$service->id,
+            'contextid' => 1,
+            'creatorid' => 2,
+            'timecreated' => time(),
+            'lastaccess' => 0,
+            'validuntil' => 0,
+            'iprestriction' => null
+        ];
+        if (!\$DB->record_exists('external_tokens', ['token' => \$token->token])) {
+            \$DB->insert_record('external_tokens', \$token);
+            echo 'Token inserted successfully.';
+        } else {
+            echo 'Token already exists.';
+        }
+    } else {
+        echo 'Service moodle_mobile_app not found.';
+    }
+    "
 fi
 
 # Data Generation (Richer Dataset)
 echo "Generating Rich Test Data..."
 
 # Course 1: Computer Science (Large - ~1000 users, many activities)
-# Using 'M' (Medium) or 'L' (Large) depending on performance. 'M' is usually safe for quick dev.
 php admin/tool/generator/cli/maketestcourse.php --shortname="CS101" --fullname="Computer Science 101" --size="M" || echo "CS101 exists."
 
 # Course 2: Mathematics (Small - quick checks)
@@ -73,6 +110,9 @@ php admin/tool/generator/cli/maketestcourse.php --shortname="MATH202" --fullname
 
 # Course 3: Physics (Medium)
 php admin/tool/generator/cli/maketestcourse.php --shortname="PHYS303" --fullname="Physics of The Future" --size="S" || echo "PHYS303 exists."
+
+echo "Setting password for 'student1'..."
+php admin/cli/reset_password.php --username=student1 --password=Moodle@2025 --ignore-password-policy
 
 
 # -------------------------------------------------------------
@@ -83,9 +123,7 @@ echo "Triggering LMS Connector Sync..."
 sleep 15 
 
 # We try to reach lms-connector on its internal port (3000)
-# Note: We must ensure 'lms-connector' is the correct service name in docker-compose.
-# Based on common setup, it is 'lms-connector'.
-curl -X POST http://lms-connector:3000/api/sync/full -H "Content-Type: application/json" -d '{}' || echo "Sync trigger failed (Check connection to lms-connector)"
+curl -X POST http://lms-connector:3000/sync/moodle -H "Content-Type: application/json" -d '{}' || echo "Sync trigger failed (Check connection to lms-connector)"
 
 echo "Startup Sequence Complete."
 exec "$@"

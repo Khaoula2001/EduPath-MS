@@ -228,6 +228,11 @@ services:
       PG_USER: prepadata
       PG_PASSWORD: prepadata_pwd
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql://prepadata:prepadata_pwd@postgres:5432/prepadata_db
+      SOURCE_DB_HOST: lmsdb
+      SOURCE_DB_PORT: 5432
+      SOURCE_DB_NAME: lmsconnector
+      SOURCE_DB_USER: lms
+      SOURCE_DB_PASSWORD: lmspass
     volumes:
       - ./microservices/prepa-data/src:/opt/prepadata/src
       - ./microservices/prepa-data/data:/opt/prepadata/data
@@ -249,6 +254,12 @@ services:
       - moodledata:/var/www/moodledata
     depends_on:
       - moodledb
+    environment:
+      - MYSQL_HOST=moodledb
+      - MYSQL_DATABASE=moodle
+      - MYSQL_USER=moodle
+      - MYSQL_PASSWORD=moodle
+      - MOODLE_URL=http://localhost:8088
 
   moodledb:
     image: mysql:8.4.5
@@ -445,6 +456,17 @@ services:
       - ./microservices/student-coach-api:/app
     ports:
       - "8005:8005"
+
+  student-coach-web:
+    build:
+      context: ./microservices/student_coach
+      dockerfile: Dockerfile
+    image: edupath/student-coach-web:latest
+    ports:
+      - "8089:80"
+    depends_on:
+      - student-coach-api
+      - api-gateway
 
 volumes:
   postgres_data_new:

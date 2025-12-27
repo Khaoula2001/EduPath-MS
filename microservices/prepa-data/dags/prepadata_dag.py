@@ -51,7 +51,7 @@ dag = DAG(
     'prepadata_complete_etl',
     default_args=default_args,
     description='Complete ETL pipeline with all preprocessing steps',
-    schedule_interval='@daily',
+    schedule_interval='*/15 * * * *',
     start_date=datetime(2024, 1, 1),
     catchup=False,
     max_active_runs=1,

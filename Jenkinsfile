@@ -29,8 +29,8 @@ pipeline {
         stage('Start Infrastructure') {
             steps {
                 script {
-                    // Start PostgreSQL, RabbitMQ, MLFlow, Elasticsearch, MinIO, MoodleDB, and LMSDB
-                    bat "docker-compose -p edupath-ms up -d postgres rabbitmq mlflow elasticsearch minio moodledb lmsdb"
+                    // Start PostgreSQL, RabbitMQ, MLFlow, Elasticsearch, MinIO, MoodleDB, LMSDB, MoodleApp, and Airflow
+                    bat "docker-compose -p edupath-ms up -d postgres rabbitmq mlflow elasticsearch minio moodledb lmsdb moodleapp airflow-init airflow-webserver airflow-scheduler"
                 }
             }
         }
@@ -274,6 +274,29 @@ pipeline {
                     }
                 }
 
+                stage('Student Coach App') {
+                    stages {
+                        stage('Build Mobile Web') {
+                            steps {
+                                dir('microservices/student_coach') {
+                                    script {
+                                        echo "Building Student Coach (Mobile Web)..."
+                                        bat "docker build -t ${DOCKER_REGISTRY}/student-coach-web:${env.BUILD_NUMBER} -t ${DOCKER_REGISTRY}/student-coach-web:latest ."
+                                    }
+                                }
+                            }
+                        }
+                        stage('Deploy Mobile Web') {
+                            steps {
+                                script {
+                                    echo "Deploying Student Coach (Mobile Web)..."
+                                    bat "docker-compose -p edupath-ms up -d --no-deps --force-recreate student-coach-web"
+                                }
+                            }
+                        }
+                    }
+                }
+
 
 
             }
@@ -297,6 +320,7 @@ pipeline {
             echo 'SUCCESS: All microservices and mobile front built.'
             echo '=== Access Links ==='
             echo 'Teacher Console: http://localhost:8088'
+            echo 'Student Mobile: http://localhost:8089'
             echo 'Moodle: http://localhost'
             echo 'Eureka: http://localhost:8761'
             echo 'Airflow: http://localhost:8081'

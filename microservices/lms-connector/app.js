@@ -104,5 +104,16 @@ app.listen(3000, () => {
 
   client.start((error) => {
     console.log(error || 'LMS Connector registered with Eureka');
+
+    // Automatic Sync Loop (Every 5 minutes)
+    setInterval(async () => {
+      console.log('--- Auto-Sync Triggered ---');
+      try {
+        await axios.post('http://localhost:3000/sync/moodle', {});
+        console.log('--- Auto-Sync Completed ---');
+      } catch (err) {
+        console.error('--- Auto-Sync Failed:', err.message);
+      }
+    }, 5 * 60 * 1000); // 5 minutes
   });
 });
