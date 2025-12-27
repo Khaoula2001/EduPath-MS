@@ -13,7 +13,7 @@
 ### Video Demonstration
 
 https://github.com/user-attachments/assets/88387013-8b25-4da8-a9e7-193cb7223aa2
-https://github.com/user-attachments/assets/736e9f77-85bc-4fa9-a653-56e57d0ce507
+
 
 ### Screenshots Gallery
 
