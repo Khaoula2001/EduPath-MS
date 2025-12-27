@@ -19,23 +19,25 @@
 
 #### 1. Teacher Console (Dashboard)
 > [!NOTE]
-> **[INSERT SCREENSHOT: TEACHER DASHBOARD OVERVIEW]**  
+> **Teacher Dashboard & Risk Analysis**  
+> ![Teacher Dashboard](screens/teacher_dashboard_overview.jpeg)
+> ![Risk Distribution](screens/teacher_dashboard_risks.jpeg)
 > *Real-time analytics, risk alerts, and class performance metrics.*
 
 #### 2. Student Mobile App (EduPath)
 > [!NOTE]
-> **[INSERT SCREENSHOT: STUDENT APP HOME & RECOMMENDATIONS]**  
+> **Student Home & Recommendations**  
+> <p align="center">
+>   <img src="screens/student_coach_home.jpeg" width="45%" alt="Home">
+>   <img src="screens/student_coach_recommendations.jpeg" width="45%" alt="Recommendations">
+> </p>
 > *Personalized learning path and resource recommendations for students.*
 
-#### 3. Visual Pipelines (Airflow)
+#### 3. DevOps Pipelines (Jenkins)
 > [!NOTE]
-> **[INSERT SCREENSHOT: AIRFLOW DAG EXECUTION]**  
-> *The ETL pipeline transforming raw Moodle data into actionable insights.*
-
-#### 4. Service Discovery (Eureka)
-> [!NOTE]
-> **[INSERT SCREENSHOT: EUREKA SERVICE REGISTRY]**  
-> *Live monitoring of all active microservices.*
+> **CI/CD Pipeline Visualization**  
+> ![Jenkins Pipeline](screens/jenkins_pipeline.png)
+> *Automated build, test, and deployment of microservices and client applications.*
 
 ---
 

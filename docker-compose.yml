@@ -30,8 +30,8 @@ services:
       - "5672:5672"
       - "15672:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: user
-      RABBITMQ_DEFAULT_PASS: password
+      RABBITMQ_DEFAULT_USER: edupath
+      RABBITMQ_DEFAULT_PASS: edupath
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 30s
@@ -196,13 +196,20 @@ services:
       dockerfile: Dockerfile
     image: edupath/api-gateway:latest
     depends_on:
-      - lms-connector
-      - student-profiler
-      - path-predictor
-      - reco-builder
-      - teacher-console-api
-      - student-coach-api
-      - eureka-server
+      lms-connector:
+        condition: service_started
+      student-profiler:
+        condition: service_started
+      path-predictor:
+        condition: service_started
+      reco-builder:
+        condition: service_started
+      teacher-console-api:
+        condition: service_started
+      student-coach-api:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
     environment:
       - PROFILER_URL=http://student-profiler:8000
       - RECCO_URL=http://reco-builder:8003
@@ -253,13 +260,19 @@ services:
     volumes:
       - moodledata:/var/www/moodledata
     depends_on:
-      - moodledb
+      moodledb:
+        condition: service_healthy
     environment:
       - MYSQL_HOST=moodledb
       - MYSQL_DATABASE=moodle
       - MYSQL_USER=moodle
       - MYSQL_PASSWORD=moodle
       - MOODLE_URL=http://localhost:8088
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/login/index.php"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
 
   moodledb:
     image: mysql:8.4.5
@@ -271,6 +284,11 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-moodle}
     volumes:
       - clouddbdata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
 
   phpmyadmin:
     image: phpmyadmin
@@ -297,16 +315,25 @@ services:
       - ./microservices/lms-connector/moodle-docker/moodle-docker/LMSConnector/sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
       - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lms -d lmsconnector"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   lms-connector:
     build:
       context: ./microservices/lms-connector/moodle-docker/moodle-docker/LMSConnector
     image: edupath/lms-connector:latest
     depends_on:
-      - moodleapp
-      - lmsdb
-      - rabbitmq
-      - eureka-server
+      moodleapp:
+        condition: service_healthy
+      lmsdb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
     environment:
       MOODLE_API_URL: http://moodleapp/webservice/rest/server.php
       MOODLE_TOKEN: 340fe84eeed17856a8bad6c59d2c87ed
@@ -457,16 +484,7 @@ services:
     ports:
       - "8005:8005"
 
-  student-coach-web:
-    build:
-      context: ./microservices/student_coach
-      dockerfile: Dockerfile
-    image: edupath/student-coach-web:latest
-    ports:
-      - "8089:80"
-    depends_on:
-      - student-coach-api
-      - api-gateway
+
 
 volumes:
   postgres_data_new:
