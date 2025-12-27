@@ -67,7 +67,7 @@ PG_CONFIG = {
     'port': int(os.getenv('PG_PORT', 5432)),
     'user': os.getenv('PG_USER', 'prepadata'),
     'password': os.getenv('PG_PASSWORD', 'prepadata_pwd'),
-    'dbname': os.getenv('PG_DB', 'analytics')
+    'dbname': os.getenv('PG_DB', 'prepadata_db')
 }
 
 

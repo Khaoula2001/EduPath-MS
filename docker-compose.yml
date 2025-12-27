@@ -18,7 +18,7 @@ services:
       - postgres_data_new:/var/lib/postgresql/data
       - ./init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U prepadata"]
+      test: ["CMD-SHELL", "pg_isready -U prepadata -d prepadata_db"]
       interval: 10s
       timeout: 5s
       retries: 5
