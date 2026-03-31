@@ -1,32 +1,80 @@
-# EduPath-MS: Intelligent Learning Analytics & Recommendation System
+# 🎓📈 EduPath-MS — Intelligent Learning Analytics & Recommendation System
 
-[![Docker](https://img.shields.io/badge/Docker-Enabled-blue.svg?logo=docker)](https://www.docker.com/)
-[![Microservices](https://img.shields.io/badge/Architecture-Microservices-orange.svg)](https://microservices.io/)
-[![Status](https://img.shields.io/badge/Status-Active-success.svg)]()
+<div align="center">
+  <picture>
+    <img src="screens/teacher_dashboard_overview.jpeg" width="600" alt="EduPath-MS Overview">
+  </picture>
+</div>
 
 **EduPath-MS** is a cutting-edge, microservices-based platform designed to enhance student success in higher education. By leveraging advanced data analytics and machine learning, it processes learning traces from LMS platforms (like Moodle) to predict dropout risks, categorize student behaviors, and provide personalized pedagogical recommendations.
 
 ---
 
-## 📽️ Demo & Visuals
+## Contents
 
-### Video Demonstration
-
-https://github.com/user-attachments/assets/88387013-8b25-4da8-a9e7-193cb7223aa2
-### Video Demonstration
-https://github.com/user-attachments/assets/736e9f77-85bc-4fa9-a653-56e57d0ce507
-   
-
-
-#### 3. DevOps Pipelines (Jenkins)
-> [!NOTE]
-> **CI/CD Pipeline Visualization**  
-> ![Jenkins Pipeline](screens/jenkins_pipeline.png)
-> *Automated build, test, and deployment of microservices and client applications.*
+- [Overview](#overview)
+- [Features](#features)
+- [Monorepo Layout](#monorepo-layout)
+- [Architecture](#architecture)
+- [Microservices Portfolio](#microservices-portfolio)
+- [Quick Start (Docker)](#quick-start-docker)
+- [Access Points](#access-points)
+- [Testing & QA](#testing--qa)
+- [Security](#security)
+- [Demo Videos](#demo-videos)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-## 🏗️ System Architecture
+## Overview
+
+- **Goal:** Enhance student success by predicting dropout risks and providing personalized pedagogical recommendations.
+- **How:** Ingest learning traces from Moodle LMS → ETL processing via Airflow → ML Engines (Clustering, XGBoost, BERT) → Delivery via API Gateway to Web/Mobile clients.
+- **Why hybrid:** Combines advanced data processing with machine learning for deep insights into student behaviors and outcomes.
+
+---
+
+## Features
+
+- 📊 **Real-time Analytics:** Process raw data (grades, logs) from Moodle LMS.
+- 🤖 **Intelligence Engines:**
+    - **Student Profiler:** Segments students using K-Means clustering.
+    - **Path Predictor:** Forecasts success/dropout probabilities using XGBoost.
+    - **Reco Builder:** Generates content recommendations using BERT embeddings & Faiss.
+- 🔔 **Asynchronous Alerting:** Critical events trigger alerts via RabbitMQ.
+- 📱 **Multi-platform Delivery:** Responsive Web Dashboard (Teacher Console) and Mobile App (Student Coach).
+- ⚙️ **DevOps Ready:** Fully containerized with Docker and automated CI/CD via Jenkins.
+
+---
+
+## Monorepo Layout
+
+```
+EduPath-MS/
+├─ microservices/
+│  ├─ api-gateway/            # Unified entry point (Node.js)
+│  ├─ eureka-server/          # Service Discovery (Spring Boot)
+│  ├─ lms-connector/          # Moodle API connector (Node.js)
+│  ├─ prepa-data/             # ETL Pipelines (Airflow/Python)
+│  ├─ path-predictor/         # ML Dropout Prediction (Python)
+│  ├─ student-profiler/       # ML Student Clustering (Python)
+│  ├─ reco-builder/           # ML Recommendations (Python)
+│  ├─ teacher-console-api/    # Teacher BFF (Python)
+│  ├─ student-coach-api/      # Student BFF (Python)
+│  ├─ TeacherConsole/         # Web Dashboard (Angular)
+│  └─ student_coach/          # Mobile Application (Flutter)
+├─ screens/                   # UI Screenshots
+├─ sql/                       # Database initialization scripts
+└─ docker-compose.yml
+```
+
+---
+
+## Architecture
+
+![Jenkins Pipeline](screens/jenkins_pipeline.png)
+*Automated build, test, and deployment of microservices and client applications.*
 
 The project is built on a **secure, event-driven microservices architecture**, fully containerized using **Docker** and orchestrated via **Docker Compose**.
 
@@ -42,7 +90,7 @@ The project is built on a **secure, event-driven microservices architecture**, f
 
 ---
 
-## 🧩 Microservices Portfolio
+## Microservices Portfolio
 
 | Service Name | Stack | Port | Description |
 | :--- | :--- | :--- | :--- |
@@ -72,13 +120,7 @@ The project is built on a **secure, event-driven microservices architecture**, f
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites
-*   **Docker Desktop** (latest version)
-*   **Git**
-
-### Installation & Run
+## Quick Start (Docker)
 
 1.  **Clone the Repository**
     ```bash
@@ -99,7 +141,9 @@ The project is built on a **secure, event-driven microservices architecture**, f
     docker-compose ps
     ```
 
-### Access Points
+---
+
+## Access Points
 
 *   **Service Registry (Eureka)**: [http://localhost:8761](http://localhost:8761)
 *   **API Gateway**: [http://localhost:4000](http://localhost:4000)
@@ -113,9 +157,9 @@ The project is built on a **secure, event-driven microservices architecture**, f
 
 ---
 
-## 🧪 Test Scenarios
+## Testing & QA
 
-### 1. Full Integration Test (Moodle -> Analytics)
+### Full Integration Test (Moodle -> Analytics)
 1.  **Login to Moodle** (`localhost:80`) as Admin.
 2.  Create a course and enroll test users.
 3.  Simulate student activity (grades, logs).
@@ -125,14 +169,41 @@ The project is built on a **secure, event-driven microservices architecture**, f
 
 ---
 
-## 🛠️ Security
+## Security
 
 *   **Authentication**: Key services are protected behind the API Gateway.
 *   **JWT**: Stateless authentication using JSON Web Tokens.
 *   **Isolation**: Each microservice manages its own database schema.
 
 ---
+
+## Demo Videos
+
+<div align="center">
+
+[▶ Video Demonstration 1](https://github.com/user-attachments/assets/88387013-8b25-4da8-a9e7-193cb7223aa2)  
+[▶ Video Demonstration 2](https://github.com/user-attachments/assets/736e9f77-85bc-4fa9-a653-56e57d0ce507)
+
+</div>
+
+---
+
+## Contributing
+
+We welcome contributions!
+
+**Contributors**
+- **Oumayma Ouedrhiri** — [ResearchGate](https://www.researchgate.net/profile/Oumayma-Ouedrhiri)
+- **Hiba Tabbaa** — [ResearchGate](https://www.researchgate.net/profile/Hiba-Tabbaa)
+- **Mohamed Lachgar** — [ResearchGate](https://www.researchgate.net/profile/Mohamed-Lachgar)
+- **Khaoula2001** — [GitHub](https://github.com/Khaoula2001)
+- **NisrineLachguer** — [GitHub](https://github.com/NisrineLachguer)
+- **omarox844** — [GitHub](https://github.com/omarox844)
+
 *Made with ❤️ by EduPath Team.*
 
-## 📄 Licence
+---
+
+## License
+
 Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
