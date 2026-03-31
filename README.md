@@ -1,138 +1,183 @@
-# EduPath-MS: Intelligent Learning Analytics & Recommendation System
+# 🎓📘 EduPath-MS — Intelligent Learning Analytics & Recommendations
 
-[![Docker](https://img.shields.io/badge/Docker-Enabled-blue.svg?logo=docker)](https://www.docker.com/)
-[![Microservices](https://img.shields.io/badge/Architecture-Microservices-orange.svg)](https://microservices.io/)
-[![Status](https://img.shields.io/badge/Status-Active-success.svg)]()
+<div align="center">
+  <picture>
+    <source srcset="https://github.com/user-attachments/assets/88387013-8b25-4da8-a9e7-193cb7223aa2" media="(prefers-color-scheme: dark)">
+    <img src="screens/logo_placeholder.png" width="260" alt="EduPath-MS Logo">
+  </picture>
+</div>
 
-**EduPath-MS** is a cutting-edge, microservices-based platform designed to enhance student success in higher education. By leveraging advanced data analytics and machine learning, it processes learning traces from LMS platforms (like Moodle) to predict dropout risks, categorize student behaviors, and provide personalized pedagogical recommendations.
-
----
-
-## 📽️ Demo & Visuals
-
-### Video Demonstration
-
-https://github.com/user-attachments/assets/88387013-8b25-4da8-a9e7-193cb7223aa2
-### Video Demonstration
-https://github.com/user-attachments/assets/736e9f77-85bc-4fa9-a653-56e57d0ce507
-   
-
-
-#### 3. DevOps Pipelines (Jenkins)
-> [!NOTE]
-> **CI/CD Pipeline Visualization**  
-> ![Jenkins Pipeline](screens/jenkins_pipeline.png)
-> *Automated build, test, and deployment of microservices and client applications.*
+**EduPath-MS** is a modular microservices-based system designed to transform raw learner logs into actionable educational interventions. The platform covers the entire data lifecycle, from multi-source LMS data ingestion (Moodle) to advanced semantic analysis using Transformer-based models (BERT), enabling the generation of individualized learning paths and proactive pedagogical decision-making.
 
 ---
 
-## 🏗️ System Architecture
+## Contents
 
-The project is built on a **secure, event-driven microservices architecture**, fully containerized using **Docker** and orchestrated via **Docker Compose**.
-
-### High-Level Data Flow
-1.  **Ingestion**: `LMS Connector` polls raw data (grades, logs) from the Moodle LMS.
-2.  **Processing (ETL)**: `PrepaData`, orchestrated by **Apache Airflow**, cleanses and transforms data into standardized performance metrics.
-3.  **Intelligence Engines**:
-    *   **Student Profiler**: Segments students using K-Means clustering.
-    *   **Path Predictor**: Forecasts success/dropout probabilities using XGBoost.
-    *   **Reco Builder**: Generates content recommendations using BERT embeddings & Faiss.
-4.  **Alerting**: Critical events trigger asynchronous alerts via **RabbitMQ**.
-5.  **Delivery**: A centralized **API Gateway** routes data to the **Teacher Console** (Web) and **Student Coach** (Mobile).
+- [Overview](#overview)
+- [Features](#features)
+- [Monorepo Layout](#monorepo-layout)
+- [Architecture](#architecture)
+- [Microservices Portfolio](#microservices-portfolio)
+- [Metrics (Model Quality)](#metrics-model-quality)
+- [Quick Start (Docker)](#quick-start-docker)
+- [Environment Variables](#environment-variables)
+- [Test Scenarios](#test-scenarios)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-## 🧩 Microservices Portfolio
+## Overview
 
-| Service Name | Stack | Port | Description |
+- **Goal:** Enhance student success by predicting dropout risks and providing personalized learning recommendations.
+- **How:** Ingest LMS logs → Clean & Feature Engineer (Airflow) → Behavioral Profiling (K-Means) → Risk Prediction (XGBoost) → Semantic Recommendation (BERT + Faiss).
+- **Why Microservices:** Ensures scalability, modularity, and technology flexibility (Node.js, Python, Java, Flutter, Angular).
+
+---
+
+## Features
+
+- 📊 **Learning Analytics:** Real-time monitoring of student engagement and performance.
+- 🤖 **Predictive Modeling:** Early warning system for at-risk students using XGBoost.
+- 🧩 **Behavioral Profiling:** Automated student segmentation (PCA + K-Means).
+- 📚 **Smart Recommendations:** Semantic resource matching via BERT embeddings.
+- 📱 **Multi-platform:** Dedicated interfaces for teachers (Web) and students (Mobile).
+- ⚙️ **Event-Driven:** Asynchronous communication via RabbitMQ for high responsiveness.
+
+---
+
+## Monorepo Layout
+
+```
+EduPath-MS/
+├─ microservices/
+│  ├─ api-gateway/            # Express.js Entry Point & Auth
+│  ├─ eureka-server/          # Service Discovery (Spring Boot)
+│  ├─ lms-connector/          # Moodle Ingestion (Node.js)
+│  ├─ prepa-data/             # ETL & Orchestration (Python + Airflow)
+│  ├─ student-profiler/       # Clustering ML Service (FastAPI)
+│  ├─ path-predictor/         # Risk Prediction ML Service (FastAPI)
+│  ├─ reco-builder/           # Semantic Recommender (FastAPI + BERT)
+│  ├─ teacher-console-api/    # BFF for Teacher Web Dashboard
+│  ├─ student-coach-api/      # BFF for Student Mobile App
+│  ├─ TeacherConsole/         # Angular Frontend
+│  └─ student_coach/          # Flutter Mobile App
+├─ docker-compose.yml
+└─ README.md
+```
+
+---
+
+## Architecture
+
+![EduPath-MS Architecture](screens/archis.png)
+
+1.  **Ingestion**: `LMS Connector` polls raw data from Moodle LMS.
+2.  **Processing (ETL)**: `PrepaData` (Airflow) transforms logs into analytical features.
+3.  **Intelligence**: `Student Profiler`, `Path Predictor`, and `Reco Builder` provide ML insights.
+4.  **Delivery**: `API Gateway` routes data to `Teacher Console` and `Student Coach`.
+
+---
+
+## Microservices Portfolio
+
+| Service | Tech Stack | Port | Description |
 | :--- | :--- | :--- | :--- |
-| **API Gateway** | Node.js / Express (REST) | `4000` | Unified entry point, JWT auth, Socket.io, and routing. |
+| **API Gateway** | Node.js / Express | `4000` | Unified entry point, JWT auth. |
 | **Eureka Server** | Java / Spring Boot | `8761` | Service Registry & Discovery. |
-| **LMS Connector** | Node.js / Express | `3001` | Connects to Moodle API to fetch raw data. |
-| **PrepaData** | Python / FastAPI / Airflow | `N/A` | ETL pipelines managed by Airflow (UI: `8081`). |
-| **Student Profiler** | Python / FastAPI | `8000` | ML Service for student behavioral clustering. |
-| **Path Predictor** | Python / FastAPI | `8002` | ML Service for dropout risk prediction (XGBoost). |
-| **Reco Builder** | Python / FastAPI | `8003` | ML Service for personalized content recommendations. |
-| **Teacher Console API**| Python / FastAPI | `8004` | BFF (Backend for Frontend) for the Teacher Dashboard. |
-| **Student Coach API** | Python / FastAPI | `8005` | BFF for the Student Mobile App (LMS stats & Alerts). |
-| **Teacher Console** | Angular | `8088` | Responsive Web Dashboard for instructors. |
-| **Student Coach** | Flutter | N/A | Cross-platform mobile application for students. |
+| **LMS Connector** | Node.js / Express | `3001` | Moodle API synchronization. |
+| **PrepaData** | Python / Airflow | `8081` | ETL pipelines & orchestration. |
+| **Student Profiler**| Python / FastAPI | `8000` | Behavioral clustering (K-Means). |
+| **Path Predictor** | Python / FastAPI | `8002` | Risk prediction (XGBoost). |
+| **Reco Builder** | Python / FastAPI | `8003` | Recommendations (BERT + Faiss). |
+| **Teacher Console**| Angular | `8088` | Web Dashboard for instructors. |
+| **Student Coach** | Flutter | N/A | Mobile App for students. |
 
-### Infrastructure & Tools
+---
 
-| Service | Type | Port / UI | Description |
+## Metrics (Model Quality)
+
+Evaluated on the **xAPI-Edu-Data** dataset (480 students, 16 features).
+
+### 📈 Risk Prediction (XGBoost)
+| Dataset | Accuracy | Precision | Recall | F1-Score | AUC-ROC |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Training** | 0.958 | 0.956 | 0.961 | 0.958 | 0.973 |
+| **Validation** | 0.949 | 0.943 | 0.952 | 0.947 | 0.968 |
+| **Test** | **0.946** | **0.941** | **0.948** | **0.944** | **0.965** |
+
+### 👥 Student Profiling (PCA + K-Means)
+| Method | Silhouette Score | Execution Time | Interpretability |
+| :--- | :---: | :---: | :---: |
+| **PCA + KMeans** | **0.58** | **2.3s** | **High** |
+| PCA + GMM | 0.49 | 8.1s | Medium |
+
+---
+
+## Quick Start (Docker)
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/Khaoula2001/EduPath-MS.git
+cd EduPath-MS
+
+# 2. Start the platform
+docker-compose up -d --build
+```
+> *Note: First-time build may take 10-15 minutes due to ML model (BERT) downloads.*
+
+---
+
+## Environment Variables
+
+| Variable | Service | Default | Purpose |
 | :--- | :--- | :--- | :--- |
-| **PostgreSQL** | Database | `5432` | Primary transactional database (per-service schemas). |
-| **RabbitMQ** | Message Broker | `5672` (AMQP) <br> `15672` (UI) | Asynchronous messaging for alerts and events. |
-| **MinIO** | Object Storage | `9999` (API) <br> `9998` (UI) | S3-compatible storage for artifacts and datasets. |
-| **Elasticsearch** | Search Engine | `9200` | Log aggregation and full-text search. |
-| **MLflow** | MLOps | `5000` (UI) | Model registry and experiment tracking. |
-| **phpMyAdmin** | Database UI | `8082` (UI) | Web interface for managing Moodle MySQL database. |
-| **Moodle** | LMS | `80` | Learning Management System instance. |
+| `POSTGRES_PASSWORD` | Postgres | `prepadata_pwd` | DB Root Password |
+| `RABBITMQ_DEFAULT_PASS`| RabbitMQ | `edupath` | Broker Password |
+| `MOODLE_TOKEN` | LMS Connector| `340fe84e...` | Moodle API Access Token |
+| `EUREKA_SERVER` | ML Services | `http://eureka...`| Service Discovery URL |
+| `MLFLOW_S3_ENDPOINT` | MLflow | `http://minio...` | Artifact Storage URL |
 
 ---
 
-## 🚀 Getting Started
+## Test Scenarios
 
-### Prerequisites
-*   **Docker Desktop** (latest version)
-*   **Git**
-
-### Installation & Run
-
-1.  **Clone the Repository**
-    ```bash
-    git clone https://github.com/NisrineLachguer/EduPath-MS.git
-    cd EduPath-MS
-    ```
-
-2.  **Start the Platform**
-    Use Docker Compose to build and start all services.
-    ```bash
-    docker-compose up -d --build
-    ```
-    > *Note: First-time build may take 10-15 minutes as ML models (BERT) and base images are downloaded.*
-
-3.  **Verify Status**
-    Check if all containers are healthy:
-    ```bash
-    docker-compose ps
-    ```
-
-### Access Points
-
-*   **Service Registry (Eureka)**: [http://localhost:8761](http://localhost:8761)
-*   **API Gateway**: [http://localhost:4000](http://localhost:4000)
-*   **Teacher Console**: [http://localhost:8088](http://localhost:8088)
-*   **Airflow UI**: [http://localhost:8081](http://localhost:8081)
-*   **RabbitMQ Management**: [http://localhost:15672](http://localhost:15672) (User/Pass: `edupath`/`edupath`)
-*   **MinIO Console**: [http://localhost:9998](http://localhost:9998)
-*   **MLflow UI**: [http://localhost:5000](http://localhost:5000)
-*   **phpMyAdmin**: [http://localhost:8082](http://localhost:8082)
-*   **Moodle LMS**: [http://localhost:80](http://localhost:80)
+### 1. Full Integration (Moodle -> Analytics)
+1. Log in to **Moodle** (`localhost:80`) and simulate activity.
+2. Trigger the **Airflow DAG** via `localhost:8081`.
+3. Verify data flow in **PostgreSQL**.
+4. Observe updated risks in **Teacher Console** (`localhost:8088`).
 
 ---
 
-## 🧪 Test Scenarios
+## Roadmap
 
-### 1. Full Integration Test (Moodle -> Analytics)
-1.  **Login to Moodle** (`localhost:80`) as Admin.
-2.  Create a course and enroll test users.
-3.  Simulate student activity (grades, logs).
-4.  Trigger the **Airflow DAG** manually via `localhost:8081`.
-5.  Observe data flowing to **Postgres**.
-6.  Check **Teacher Console** (`localhost:8088`) to see updated risks and profiles.
+- [ ] Multi-LMS interoperability (Canvas, Blackboard).
+- [ ] Reinforcement Learning for adaptive learning pathways.
+- [ ] XAI (Explainable AI) for model prediction transparency.
+- [ ] Real-time mobile notifications via Firebase.
 
 ---
 
-## 🛠️ Security
+## Contributing
 
-*   **Authentication**: Key services are protected behind the API Gateway.
-*   **JWT**: Stateless authentication using JSON Web Tokens.
-*   **Isolation**: Each microservice manages its own database schema.
+We welcome contributions! Please follow our code style and submit a PR.
+
+### **Contributors**
+- **OUEDRHIRI Oumayma** — [ResearchGate](https://www.researchgate.net/profile/Oumayma-Ouedrhiri)
+- **TABBAA Hiba** — [ResearchGate](https://www.researchgate.net/profile/Hiba-Tabbaa)
+- **LACHGAR Mohamed** — [ResearchGate](https://www.researchgate.net/profile/Mohamed-Lachgar)
+- **AIT BEL MEHDI Khaoula** — [GitHub](https://github.com/Khaoula2001)
+- **LACHGUER Nisrine** — [GitHub](https://github.com/NisrineLachguer)
+- **EL AMRANI Omar** — [GitHub](https://github.com/omarox844)
+- **NADI Hajar** — [GitHub](https://github.com/NadiHajar)
+
+---
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 *Made with ❤️ by EduPath Team.*
-
-## 📄 Licence
-Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
